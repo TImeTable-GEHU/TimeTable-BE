@@ -1,41 +1,40 @@
 import random
 
-# Define the constraints and available values
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-sections = ["A", "B", "C", "D"]
-time_slots = [
-    "9:00 - 9:55 A.M",     
-    "9:55 - 10:50 A.M",
-    "10:50 - 11:00 A.M (Break)",  # Morning Break
-    "11:00 - 11:55 A.M",
-    "11:55 - 12:50 P.M",
-    "12:50 - 1:00 P.M (Lunch Break)",  # Lunch Break
-    "1:00 - 2:00 P.M"
-]
-teachers = ["T1", "T2", "T3", "T4", "T5"]
-subjects = ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
-classrooms = ["R1", "R2", "R3"]
-
-# Teacher-to-subject mappings for constraints
-teacher_subject_map = {
-    "T1": ["S1", "S3"],
-    "T2": ["S2", "S4", "S6"],
-    "T3": ["S2", "S5"],
-    "T4": ["S7", "S6"],
-    "T5": ["S5", "S1"]
-}
-
-class TimetableGenerator:
+class Timetable:
     def __init__(self):
-        self.population = []  # Holds the population of chromosomes
+        self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        self.sections = ["A", "B", "C", "D"]
+        self.time_slots = [
+            "9:00 - 9:55 A.M",      
+            "9:55 - 10:50 A.M", 
+            "10:50 - 11:00 A.M (Break)",  
+            "11:00 - 11:55 A.M", 
+            "11:55 - 12:50 P.M", 
+            "12:50 - 1:00 P.M (Lunch Break)",  
+            "1:00 - 2:00 P.M"
+        ]
+        self.teachers = ["T1", "T2", "T3", "T4", "T5"]
+        self.subjects = ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+        self.classrooms = ["R1", "R2", "R3"]
+        self.teacher_subject_map = {
+            "T1": ["S1", "S3"],
+            "T2": ["S2", "S4", "S6"],
+            "T3": ["S2", "S5"],
+            "T4": ["S7", "S6"],
+            "T5": ["S5", "S1"]
+        }
+        self.teacher_max_hours = {"T1": 4, "T2": 5, "T3": 4, "T4": 3, "T5": 4}
+        self.room_capacity = {"R1": 30, "R2": 25, "R3": 20}
+        self.section_strength = {"A": 30, "B": 25, "C": 20, "D": 15}
 
     def generate_day_schedule(self):
-        """Generate a single day’s timetable for all sections."""
         day_schedule = {}
-        for section in sections:
+        time_slot_classroom_usage = {time_slot: set() for time_slot in self.time_slots}
+        time_slot_teacher_usage = {time_slot: set() for time_slot in self.time_slots}
+
+        for section in self.sections:
             section_schedule = []
-            for time_slot in time_slots:
-                # If the time slot is a break or lunch time, add it with no class
+            for time_slot in self.time_slots:
                 if "Break" in time_slot:
                     schedule_item = {
                         "teacher_id": "None",
@@ -44,12 +43,20 @@ class TimetableGenerator:
                         "time_slot": time_slot
                     }
                 else:
-                    # Randomly select a teacher that has available subjects
-                    teacher = random.choice(teachers)
-                    available_subjects = teacher_subject_map[teacher]
-                    subject = random.choice(available_subjects)
-                    classroom = random.choice(classrooms)
-                    # Construct the schedule item
+                    teacher, subject, classroom = None, None, None
+                    attempts = 0
+                    while attempts < 10:
+                        teacher = random.choice(self.teachers)
+                        subject = random.choice(self.teacher_subject_map[teacher])
+                        classroom = random.choice(self.classrooms)
+                        if teacher not in time_slot_teacher_usage[time_slot] and \
+                           classroom not in time_slot_classroom_usage[time_slot]:
+                            break
+                        attempts += 1
+
+                    time_slot_teacher_usage[time_slot].add(teacher)
+                    time_slot_classroom_usage[time_slot].add(classroom)
+
                     schedule_item = {
                         "teacher_id": teacher,
                         "subject_id": subject,
@@ -61,132 +68,122 @@ class TimetableGenerator:
         return day_schedule
 
     def create_timetable(self):
-        """Create a full timetable chromosome."""
         timetable = {}
-        for day in days:
+        for day in self.days:
             timetable[day] = self.generate_day_schedule()
         return timetable
 
+    def create_multiple_timelines(self, num_chromosomes):
+        return [self.create_timetable() for _ in range(num_chromosomes)]
+
     def calculate_fitness(self, chromosome):
-        """Calculate fitness score for a given timetable chromosome."""
-        overall_fitness_score = 1000  # Start with a high score for the overall timetable
-        section_fitness_scores = {}  # Store fitness scores for each section
-        # Constraint 1: No overlap of teachers and classrooms across sections in the same time slot
+        overall_fitness_score = 0
+        section_fitness_scores = {}
+
         for day, day_schedule in chromosome.items():
-            section_fitness_scores[day] = {}  # Initialize daily fitness tracking
+            section_fitness_scores[day] = {}
             for section, section_schedule in day_schedule.items():
-                section_score = 100  # Start with a high score for each section
-                teacher_time_slots = {}  # Track teachers and their time slots within the section
-                classroom_time_slots = {}  # Track classrooms and their time slots within the section
-                teacher_load = {}  # Track consecutive slots for each teacher
+                section_score = 100
+                teacher_time_slots = {}
+                classroom_time_slots = {}
+                teacher_load = {}
+
                 for item in section_schedule:
                     teacher = item['teacher_id']
                     classroom = item['classroom_id']
                     time_slot = item['time_slot']
+                    strength = self.section_strength[section]
+
                     if "Break" in time_slot:
-                        continue  # Skip breaks
-                    # Check for teacher overlap
+                        continue
+
                     if (teacher, time_slot) in teacher_time_slots:
-                        section_score -= 30  # Heavier penalty for teacher overlap
+                        section_score -= 30  # Penalize for teacher clash
                     else:
                         teacher_time_slots[(teacher, time_slot)] = section
-                    # Check for classroom overlap
+
                     if (classroom, time_slot) in classroom_time_slots:
-                        section_score -= 20  # Heavier penalty for classroom overlap
+                        section_score -= 20  # Penalize for classroom clash
                     else:
                         classroom_time_slots[(classroom, time_slot)] = section
-                    # Track teacher load to ensure no consecutive slots without breaks
+
                     if teacher not in teacher_load:
                         teacher_load[teacher] = []
                     teacher_load[teacher].append(time_slot)
-                # Penalty for teachers having back-to-back slots without breaks
+
+                    if strength > self.room_capacity[classroom]:
+                        section_score -= 25
+
                 for teacher, slots in teacher_load.items():
+                    if len(slots) > self.teacher_max_hours[teacher]:
+                        section_score -= 15
+
                     for i in range(1, len(slots)):
                         if "Break" not in slots[i - 1] and "Break" not in slots[i]:
-                            section_score -= 10  # Penalty for consecutive classes without a break
-                # Introduce a random variation in the section base score
-                section_score += random.randint(-20, 20)  # Adds more score range variability
-                # Store the fitness score for this section
-                section_fitness_scores[day][section] = max(section_score, 0)  # Ensure non-negative
-                overall_fitness_score += section_score - 100  # Adjust overall fitness
-        # Ensure fitness is non-negative
-        overall_fitness_score = max(overall_fitness_score, 0)
+                            section_score -= 10  # Penalize if no gaps
+
+                section_fitness_scores[day][section] = max(section_score, 0)
+                overall_fitness_score += max(section_score, 0)
+
         return overall_fitness_score
 
-    def tournament_selection(self, tournament_size=3):
-        """Select a parent chromosome using tournament selection."""
-        tournament = random.sample(self.population, tournament_size)  # Randomly select individuals for the tournament
-        tournament_fitness = [self.calculate_fitness(chromosome) for chromosome in tournament]
-        winner_index = tournament_fitness.index(max(tournament_fitness))  # Find the index of the best fitness
-        return tournament[winner_index]  # Return the best chromosome
-
-    def roulette_wheel_selection(self):
-        """Select a parent chromosome using roulette wheel selection."""
-        total_fitness = sum(self.calculate_fitness(chromosome) for chromosome in self.population)
-        selection_probs = [self.calculate_fitness(chromosome) / total_fitness for chromosome in self.population]
-        random_value = random.random()
-        cumulative_probability = 0.0
-        for index, prob in enumerate(selection_probs):
-            cumulative_probability += prob
-            if random_value <= cumulative_probability:
-                return self.population[index]  # Return the selected chromosome
-
-    def rank_selection(self):
-        """Select a parent chromosome using rank selection."""
-        sorted_population = sorted(self.population, key=self.calculate_fitness, reverse=True)  # Sort by fitness
-        rank_probs = [(i + 1) / len(sorted_population) for i in range(len(sorted_population))]  # Calculate rank probabilities
-        random_value = random.random()
-        cumulative_probability = 0.0
-        for index, prob in enumerate(rank_probs):
-            cumulative_probability += prob
-            if random_value <= cumulative_probability:
-                return sorted_population[index]  # Return the selected chromosome
-
-    def assess_selection_algorithms(self, runs=5):
-        """Assess the performance of different selection algorithms over multiple runs."""
-        results = {
-            'tournament': [],
-            'roulette': [],
-            'rank': []
-        }
-
-        # Create an initial population
-        self.population = [self.create_timetable() for _ in range(10)]  # Keeping population size at 10
-
-        # Run each selection method 'runs' times
-        for _ in range(runs):
-            # Tournament Selection
-            selected_chromosome = self.tournament_selection()
-            fitness_score = self.calculate_fitness(selected_chromosome)
-            results['tournament'].append(fitness_score)
-
-            # Roulette Wheel Selection
-            selected_chromosome = self.roulette_wheel_selection()
-            fitness_score = self.calculate_fitness(selected_chromosome)
-            results['roulette'].append(fitness_score)
-
-            # Rank Selection
-            selected_chromosome = self.rank_selection()
-            fitness_score = self.calculate_fitness(selected_chromosome)
-            results['rank'].append(fitness_score)
-
-        # Calculate average scores
-        average_scores = {method: sum(scores) / runs for method, scores in results.items()}
+    def roulette_wheel_selection(self, chromosomes, selection_ratio=0.2):
+        total_fitness = sum(self.calculate_fitness(chromosome) for chromosome in chromosomes)
+        selection_count = int(len(chromosomes) * selection_ratio)  # Select 20% of chromosomes
         
-        # Find the best selection method
-        best_method = max(average_scores, key=average_scores.get)
-        best_score = average_scores[best_method]
+        selection_probs = [self.calculate_fitness(chromosome) / total_fitness for chromosome in chromosomes]
+        
+        cumulative_probs = []
+        cumulative_sum = 0
+        for prob in selection_probs:
+            cumulative_sum += prob
+            cumulative_probs.append(cumulative_sum)
 
-        print("\n--- Average Fitness Scores ---")
-        for method, avg_score in average_scores.items():
-            print(f"{method.capitalize()} Selection: {avg_score:.2f}")
+        selected_chromosomes = []
+        for _ in range(selection_count):  # Select based on calculated selection count
+            rand_val = random.random()
+            for index, cumulative_prob in enumerate(cumulative_probs):
+                if rand_val <= cumulative_prob:
+                    selected_chromosomes.append(chromosomes[index])
+                    break
+        
+        return selected_chromosomes
 
-        print(f"\nBest Selection Method: {best_method.capitalize()} with an average score of {best_score:.2f}")
+# Instantiate the Timetable class and generate multiple chromosomes
+timetable_obj = Timetable()
+num_chromosomes = 10  # Specify the number of chromosomes you want to generate
+chromosomes = timetable_obj.create_multiple_timelines(num_chromosomes)
 
-    def run(self):
-        """Run the timetable generator and assess selection methods."""
-        self.assess_selection_algorithms(runs=5)
+# Calculate fitness for all chromosomes
+fitness_scores = [timetable_obj.calculate_fitness(chromosome) for chromosome in chromosomes]
 
-# Create an instance of the TimetableGenerator and run the assessment
-timetable_gen = TimetableGenerator()
-timetable_gen.run()
+# Select chromosomes using roulette wheel selection
+selected_chromosomes = timetable_obj.roulette_wheel_selection(chromosomes, selection_ratio=0.2)
+
+# Display total number of chromosomes and number of selected chromosomes
+print(f"\nTotal Number of Chromosomes: {num_chromosomes}")
+print(f"Number of Selected Chromosomes: {len(selected_chromosomes)}")
+
+# Display fitness scores in a table
+print("\n=== Overall Fitness of All Chromosomes ===")
+print(f"{'Chromosome':<15} {'Fitness Score'}")
+print("-" * 30)  # Separator
+for i, score in enumerate(fitness_scores):
+    selected_marker = "*" if chromosomes[i] in selected_chromosomes else " "
+    print(f"{f'Chromosome {i + 1}':<15} {score} {selected_marker}")
+
+# Display selected chromosomes
+print("\n=== Selected Chromosomes After Roulette Wheel Selection ===")
+for i, chromosome in enumerate(selected_chromosomes):
+    fitness = timetable_obj.calculate_fitness(chromosome)
+    print(f"\n--- Selected Chromosome {i + 1} ---")
+    print(f"Overall Fitness Score: {fitness}")
+    for day, day_schedule in chromosome.items():
+        print(f"\n--- {day} ---")
+        print(f"{'Time Slot':<25} {'Teacher':<10} {'Subject':<10} {'Classroom'}")
+        print("-" * 60)  # Separator
+        for section, schedule in day_schedule.items():
+            print(f"Section {section}:")
+            for item in schedule:
+                print(f"  {item['time_slot']:<25} {item['teacher_id']:<10} {item['subject_id']:<10} {item['classroom_id']}")
+            print()  # Extra space after each section
