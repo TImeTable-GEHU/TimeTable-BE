@@ -1,4 +1,3 @@
-
 class TimeIntervalConstant:
     # Time intervals for the day
         time_slots = {
