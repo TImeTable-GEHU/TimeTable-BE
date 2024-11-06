@@ -4,51 +4,49 @@ class Timetable:
     def __init__(self):
         self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         self.sections = ["A", "B", "C", "D"]
-        self.time_slots = [
-            "9:00 A.M - 9:55 A.M",      
-            "9:55 A.M - 10:50 A.M", 
-            "10:50 A.M - 11:00 A.M (Break)",  # Morning Break
-            "11:00 A.M - 11:55 A.M", 
-            "11:55 A.M - 12:50 P.M", 
-            "12:50 P.M - 1:00 P.M (Lunch Break)",  # Lunch Break
-            "1:00 P.M - 2:00 P.M"
-        ]
-        
-        # Subject-to-teacher mapping
+        self.time_slots = {
+            1: "9:00 A.M - 9:55 A.M",      
+            2: "9:55 A.M - 10:50 A.M", 
+            3: "10:50 A.M - 11:00 A.M (Break)",  
+            4: "11:00 A.M - 11:55 A.M", 
+            5: "11:55 A.M - 12:50 P.M", 
+            6: "12:50 P.M - 1:00 P.M (Lunch Break)",  
+            7: "1:00 P.M - 2:00 P.M",
+            8: "2:00 P.M - 3:00 P.M"
+        }
         self.subject_teacher_map = {
-            "Communication Models and Protocols": ["Mr. Anubhav Bewerval", "Mr. Prince Kumar"],
-            "Operating Systems": ["Mr. Shashi Kumar Sharma", "Mr. Aviral Awasthi", "Mr. Akshay Choudhary"],
-            "Database Management Systems": ["Mr. Shashi Kumar Sharma", "Ms. Senam Pandey", "Mr. Devesh Pandey", "Mr. Akshay Choudhary"],
-            "DBMS Lab": ["Ms. Senam Pandey", "Ms. Vaishali Dev"],
-            "Computer Based Numerical and Statistical Techniques": ["Dr. B P Joshi", "Mr. Rahul Singh", "Mr. JS Mehta", "Dr. Navneet Joshi"],
-            "CBNST Lab": ["Mr. Parthak Mehra", "Mr. Ansh Dhingra", "Ms. Akshita Arya"],
-            "Machine Learning": ["Dr. Shilpa Jain", "Dr. Ankur Singh Bist", "Ms. Heera Patwal", "Dr. Subhankar Ghosal"],
-            "Career Skills": ["Mr. Divas Tewari", "Mr. Pawan Agarwal", "Mr. Narendra Bisht"],
-            "Placement Classes": ["Mr. Ayush Kapri"],
-            "Operating Systems Lab": ["Mr. Ansh Dhingra", "Ms. Rashmi Deopa"]
+            "TCS-531": ["AB01", "PK02"],
+            "TCS-502": ["SS03", "AA04", "AC05"],
+            "TCS-503": ["SP06", "DP07", "AC05"],
+            "PCS-506": ["AD08", "RD09"],
+            "TMA-502": ["BJ10", "RS11", "JM12", "NJ13"],
+            "PMA-502": ["PM14", "AD08", "AA15"],
+            "TCS-509": ["SJ16", "AB17", "HP18", "SG19"],
+            "XCS-501": ["DT20", "PA21", "NB22"],
+            "CSP-501": ["AK23"],
+            "SCS-501": ["AP24"]
         }
 
         self.classrooms = ["R1", "R2", "R3", "R4", "R5"]
-        self.teacher_work_load = {
-            "Mr. Anubhav Bewerval": 4, "Mr. Shashi Kumar Sharma": 5, "Ms. Senam Pandey": 4,
-            "Dr. B P Joshi": 3, "Dr. Shilpa Jain": 4, "Mr. Parthak Mehra": 4,
-            "Mr. Ansh Dhingra": 3, "Mr. Divas Tewari": 5, "Mr. Pawan Agarwal": 5,
-            "Mr. Devesh Pandey": 4, "Mr. Rahul Singh": 5, "Mr. Aviral Awasthi": 3,
-            "Mr. JS Mehta": 4, "Dr. Ankur Singh Bist": 3, "Mr. Narendra Bisht": 5,
-            "Mr. Ayush Kapri": 4, "Dr. Navneet Joshi": 3, "Ms. Heera Patwal": 4,
-            "Ms. Akshita Arya" : 4, "Ms. Rashmi Deopa": 3, "Ms. Vaishali Dev": 4, 
-            "Mr. Prince Kumar" : 4 , "Mr. Akshay Choudhary": 4, "Dr. Subhankar Ghosal": 4
-        }
-        self.room_capacity = {"R1": 250, "R2": 250, "R3": 200, "R4": 240, "R5": 250}
-        self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 200}
+        self.room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
+        self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
 
-    def generate_day_schedule(self):
+        self.teacher_schedule = {slot: {} for slot in self.time_slots}
+        self.room_schedule = {slot: {} for slot in self.time_slots}
+        self.assigned_teachers = {section: {} for section in self.sections}
+        self.section_rooms = {section: self.classrooms[i % len(self.classrooms)] for i, section in enumerate(self.sections)}
+
+    def generate_day_schedule(self, day, sections_half_day):
         day_schedule = {}
         for section in self.sections:
             section_schedule = []
-            for time_slot in self.time_slots:
+            subjects_used_today = set()
+            current_room = self.section_rooms[section]
+            slots_to_run = [1, 2, 3, 4, 5] if section in sections_half_day else [1, 2, 3, 4, 5, 6, 7, 8]
+
+            for index in slots_to_run:
+                time_slot = self.time_slots[index]
                 if "Break" in time_slot:
-                    # Handle breaks without assigning teachers or subjects
                     schedule_item = {
                         "teacher_id": "None",
                         "subject_id": "Break",
@@ -56,101 +54,74 @@ class Timetable:
                         "time_slot": time_slot
                     }
                 else:
-                    # Randomly choose a subject and assign a teacher who can teach it
-                    subject = random.choice(list(self.subject_teacher_map.keys()))
-                    teacher = random.choice(self.subject_teacher_map[subject])
-                    classroom = random.choice(self.classrooms)
+                    available_subjects = list(self.subject_teacher_map.keys())
+                    subject, teacher = None, None
+
+                    while available_subjects:
+                        subject = random.choice(available_subjects)
+                        if subject not in subjects_used_today:
+                            if subject in self.assigned_teachers[section]:
+                                teacher = self.assigned_teachers[section][subject]
+                            else:
+                                possible_teachers = self.subject_teacher_map[subject]
+                                for candidate_teacher in possible_teachers:
+                                    if candidate_teacher not in self.teacher_schedule[index].values():
+                                        teacher = candidate_teacher
+                                        self.assigned_teachers[section][subject] = teacher
+                                        break
+                            if teacher:
+                                break
+                        available_subjects.remove(subject)
+
+                    if subject is None or teacher is None:
+                        subject, teacher = "Library", "None"
+
+                    subjects_used_today.add(subject)
+                    self.teacher_schedule[index][teacher] = section
+                    self.room_schedule[index][current_room] = section
+
+                    if subject.startswith("PCS") or "Lab" in subject:
+                        next_slot_index = index + 1
+                        if next_slot_index in slots_to_run:
+                            next_time_slot = self.time_slots[next_slot_index]
+                            if "Break" not in next_time_slot:
+                                section_schedule.append({
+                                    "teacher_id": teacher,
+                                    "subject_id": subject,
+                                    "classroom_id": current_room,
+                                    "time_slot": next_time_slot
+                                })
                     
                     schedule_item = {
                         "teacher_id": teacher,
                         "subject_id": subject,
-                        "classroom_id": classroom,
+                        "classroom_id": current_room,
                         "time_slot": time_slot
                     }
+
                 section_schedule.append(schedule_item)
             day_schedule[section] = section_schedule
         return day_schedule
 
     def create_timetable(self):
         timetable = {}
-        for day in self.days:
-            timetable[day] = self.generate_day_schedule()
+        for week_day in self.days:
+            sections_half_day = random.sample(self.sections, len(self.sections) // 2)
+            timetable[week_day] = self.generate_day_schedule(week_day, sections_half_day)
         return timetable
 
-    def calculate_fitness(self, chromosome):
-        overall_fitness_score = 0
-        section_fitness_scores = {}
-
-        for day, day_schedule in chromosome.items():
-            section_fitness_scores[day] = {}
+    def print_timetable(self, timetable):
+        print("\n--- Weekly Timetable ---\n")
+        for day, day_schedule in timetable.items():
+            print(f"Day: {day}")
             for section, section_schedule in day_schedule.items():
-                section_score = 100
-                teacher_time_slots = {}
-                classroom_time_slots = {}
-                teacher_load = {}
-
+                print(f"  Section: {section}")
                 for item in section_schedule:
-                    teacher = item['teacher_id']
-                    classroom = item['classroom_id']
-                    time_slot = item['time_slot']
-                    strength = self.section_strength[section]
+                    print(f"    {item['time_slot']}: {item['subject_id']} (Teacher: {item['teacher_id']}, Room: {item['classroom_id']})")
+                print("  " + "-"*40)
+            print("="*60)
 
-                    if "Break" in time_slot:
-                        continue  # Skip breaks
-
-                    # Check for teacher time slot clashes
-                    if (teacher, time_slot) in teacher_time_slots:
-                        section_score -= 30
-                    else:
-                        teacher_time_slots[(teacher, time_slot)] = section
-
-                    # Check for classroom time slot clashes
-                    if (classroom, time_slot) in classroom_time_slots:
-                        section_score -= 20
-                    else:
-                        classroom_time_slots[(classroom, time_slot)] = section
-
-                    # Count teacher load
-                    if teacher not in teacher_load:
-                        teacher_load[teacher] = []
-                    teacher_load[teacher].append(time_slot)
-
-                    # Check if section strength exceeds room capacity
-                    if strength > self.room_capacity[classroom]:
-                        section_score -= 25
-
-                # Evaluate teacher maximum hours and consecutive classes
-                for teacher, slots in teacher_load.items():
-                    if len(slots) > self.teacher_work_load[teacher]:
-                        section_score -= 15
-
-                    for i in range(1, len(slots)):
-                        if "Break" not in slots[i - 1] and "Break" not in slots[i]:
-                            section_score -= 10
-
-                section_fitness_scores[day][section] = max(section_score, 0)
-                overall_fitness_score += max(section_score, 0)
-
-        print("\n--- Section-wise Fitness Scores ---")
-        for day, day_scores in section_fitness_scores.items():
-            for section, score in day_scores.items():
-                print(f"{day}, Section {section}: Fitness Score = {score}")
-
-        print(f"\nOverall Fitness Score: {overall_fitness_score/20}")
-        return overall_fitness_score
-
-# Instantiate the Timetable class and generate a timetable
-timetable_obj = Timetable()
-chromosome = timetable_obj.create_timetable()
-fitness = timetable_obj.calculate_fitness(chromosome)
-
-# Display the generated timetable and its fitness score
-for day, day_schedule in chromosome.items():
-    print(f"--- {day} ---")
-    for section, schedule in day_schedule.items():
-        print(f" Section {section}:")
-        for item in schedule:
-            print(f"  Teacher: {item['teacher_id']}, Subject: {item['subject_id']}, Classroom: {item['classroom_id']}, Time Slot: {item['time_slot']}")
-    print("\n" + "-" * 40 + "\n")
-
-print("Final Fitness Score:", fitness/20)
+# Usage
+timetable = Timetable()
+weekly_schedule = timetable.create_timetable()
+timetable.print_timetable(weekly_schedule)
