@@ -14,6 +14,7 @@ class Timetable:
             7: "1:00 P.M - 2:00 P.M",
             8: "2:00 P.M - 3:00 P.M"
         }
+        
         self.subject_teacher_map = {
             "TCS-531": ["AB01", "PK02"],
             "TCS-502": ["SS03", "AA04", "AC05"],
@@ -28,15 +29,21 @@ class Timetable:
         }
 
         self.classrooms = ["R1", "R2", "R3", "R4", "R5"]
+        
         self.room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
+        
         self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
 
         self.teacher_schedule = {slot: {} for slot in self.time_slots}
+        
         self.room_schedule = {slot: {} for slot in self.time_slots}
+        
         self.assigned_teachers = {section: {} for section in self.sections}
+        
         self.section_rooms = {section: self.classrooms[i % len(self.classrooms)] for i, section in enumerate(self.sections)}
 
     def generate_day_schedule(self, day, sections_half_day):
+        
         day_schedule = {}
         for section in self.sections:
             section_schedule = []
@@ -103,12 +110,14 @@ class Timetable:
             day_schedule[section] = section_schedule
         return day_schedule
 
+
     def create_timetable(self):
         timetable = {}
         for week_day in self.days:
             sections_half_day = random.sample(self.sections, len(self.sections) // 2)
             timetable[week_day] = self.generate_day_schedule(week_day, sections_half_day)
         return timetable
+
 
     def print_timetable(self, timetable):
         print("\n--- Weekly Timetable ---\n")
@@ -120,6 +129,7 @@ class Timetable:
                     print(f"    {item['time_slot']}: {item['subject_id']} (Teacher: {item['teacher_id']}, Room: {item['classroom_id']})")
                 print("  " + "-"*40)
             print("="*60)
+
 
 # Usage
 timetable = Timetable()
