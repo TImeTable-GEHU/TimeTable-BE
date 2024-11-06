@@ -127,27 +127,31 @@ class Timetable:
 
         return overall_fitness_score
 
-    def roulette_wheel_selection(self, chromosomes, selection_ratio=0.2):
-        total_fitness = sum(self.calculate_fitness(chromosome) for chromosome in chromosomes)
-        selection_count = int(len(chromosomes) * selection_ratio)  # Select 20% of chromosomes
-        
-        selection_probs = [self.calculate_fitness(chromosome) / total_fitness for chromosome in chromosomes]
-        
-        cumulative_probs = []
-        cumulative_sum = 0
-        for prob in selection_probs:
-            cumulative_sum += prob
-            cumulative_probs.append(cumulative_sum)
+    def select_custom_parents(self, chromosomes, top_percentage=0.20, random_percentage=0.10):
+        """
+        Select chromosomes using a combination of the top percentage and some random but good chromosomes for diversity.
+        - Select top `top_percentage` of chromosomes based on fitness.
+        - Randomly select `random_percentage` of chromosomes for diversity, but from those with good fitness.
+        """
+        # Calculate fitness scores for each chromosome
+        fitness_scores = [(chromosome, self.calculate_fitness(chromosome)) for chromosome in chromosomes]
 
-        selected_chromosomes = []
-        for _ in range(selection_count):  # Select based on calculated selection count
-            rand_val = random.random()
-            for index, cumulative_prob in enumerate(cumulative_probs):
-                if rand_val <= cumulative_prob:
-                    selected_chromosomes.append(chromosomes[index])
-                    break
-        
+        # Sort chromosomes by fitness score in descending order
+        fitness_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # Select the top chromosomes (top 20%)
+        top_count = max(1, int(len(chromosomes) * top_percentage))  # Ensure at least 1 is selected
+        top_chromosomes = [fitness_scores[i][0] for i in range(top_count)]
+
+        # Select the random but good chromosomes (next 10%)
+        remaining_chromosomes = [fitness_scores[i][0] for i in range(top_count, len(chromosomes))]
+        random_good_count = max(1, int(len(chromosomes) * random_percentage))  # Ensure at least 1 is selected
+        random_good_chromosomes = random.sample(remaining_chromosomes, random_good_count)
+
+        # Combine top and random good chromosomes
+        selected_chromosomes = top_chromosomes + random_good_chromosomes
         return selected_chromosomes
+
 
 # Instantiate the Timetable class and generate multiple chromosomes
 timetable_obj = Timetable()
@@ -157,12 +161,12 @@ chromosomes = timetable_obj.create_multiple_timelines(num_chromosomes)
 # Calculate fitness for all chromosomes
 fitness_scores = [timetable_obj.calculate_fitness(chromosome) for chromosome in chromosomes]
 
-# Select chromosomes using roulette wheel selection
-selected_chromosomes = timetable_obj.roulette_wheel_selection(chromosomes, selection_ratio=0.2)
+# Select chromosomes using the custom selection method (top 20% + random 10%)
+selected_chromosomes = timetable_obj.select_custom_parents(chromosomes, top_percentage=0.20, random_percentage=0.10)
 
 # Display total number of chromosomes and number of selected chromosomes
 print(f"\nTotal Number of Chromosomes: {num_chromosomes}")
-print(f"Number of Selected Chromosomes: {len(selected_chromosomes)}")
+print(f"Number of Selected Chromosomes (Top 20% + Random 10%): {len(selected_chromosomes)}")
 
 # Display fitness scores in a table
 print("\n=== Overall Fitness of All Chromosomes ===")
@@ -173,7 +177,7 @@ for i, score in enumerate(fitness_scores):
     print(f"{f'Chromosome {i + 1}':<15} {score} {selected_marker}")
 
 # Display selected chromosomes
-print("\n=== Selected Chromosomes After Roulette Wheel Selection ===")
+print("\n=== Selected Chromosomes: Top 20% + Random 10% ===")
 for i, chromosome in enumerate(selected_chromosomes):
     fitness = timetable_obj.calculate_fitness(chromosome)
     print(f"\n--- Selected Chromosome {i + 1} ---")
