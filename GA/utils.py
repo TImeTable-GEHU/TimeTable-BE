@@ -1,7 +1,6 @@
 from datetime import datetime
 from constants.TimeIntervals import TimeIntervalConstant
 
-
 class TimeSlotUtils:
     """
         - Utility class for working with time slots and intervals.
