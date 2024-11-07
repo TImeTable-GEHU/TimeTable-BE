@@ -74,7 +74,7 @@ These are preferences that enhance the quality of the solution but are not manda
    - Aim for a balanced distribution of classes among teachers to prevent overloading any single teacher.
 
 4. **Half Days for Sections**
-   - Every section should be provided half days so that resources can be utilised properrly and also labs and calsses should be balanced.
+   - Every section should be provided half days so that resources can be utilised properly and also labs and calsses should be balanced.
 
 ### Fitness Score Calculation
 The fitness score is calculated based on the following criteria:
