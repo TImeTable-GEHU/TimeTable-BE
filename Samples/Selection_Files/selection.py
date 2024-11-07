@@ -1,19 +1,14 @@
 import random
 import heapq
 
+from constants.TimeIntervals import TimeIntervalConstant
+
+
 class Timetable:
     def __init__(self):
         self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         self.sections = ["A", "B", "C", "D"]
-        self.time_slots = [
-            "9:00 - 9:55 A.M",      
-            "9:55 - 10:50 A.M", 
-            "10:50 - 11:00 A.M (Break)",  
-            "11:00 - 11:55 A.M", 
-            "11:55 - 12:50 P.M", 
-            "12:50 - 1:00 P.M (Lunch Break)",  
-            "1:00 - 2:00 P.M"
-        ]
+        self.time_slots = TimeIntervalConstant.get_all_time_slots()
         self.teachers = ["T1", "T2", "T3", "T4", "T5"]
         self.subjects = ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
         self.classrooms = ["R1", "R2", "R3"]
