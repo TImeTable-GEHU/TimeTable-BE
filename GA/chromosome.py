@@ -1,11 +1,12 @@
 import random
 from constants.TimeIntervals import TimeIntervalConstant
+from constants.constant import WorkingDays
 
 class Chromosome:
     def __init__(self):
-        self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         self.sections = ["A", "B", "C", "D"]
         self.time_slots = TimeIntervalConstant.time_slots
+        self.days = WorkingDays.days
         self.subject_teacher_map = {
             "TCS-531": ["AB01", "PK02"],
             "TCS-502": ["SS03", "AA04", "AC05"],
