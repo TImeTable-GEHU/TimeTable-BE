@@ -21,7 +21,6 @@ def calculate_student_score(student):
         score += ATTRIBUTE_WEIGHTS['hostler']
     else:
         score += ATTRIBUTE_WEIGHTS['non_hostler']
-
     return score
 
 def divide_students(students, class_strength):
