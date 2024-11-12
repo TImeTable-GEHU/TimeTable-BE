@@ -1,19 +1,13 @@
 import random
 
-class Timetable:
+from constants.TimeIntervals import TimeIntervalConstant
+
+
+class TimetableFitness:
     def __init__(self):
         self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         self.sections = ["A", "B", "C", "D"]
-        self.time_slots = {
-            1: "9:00 A.M - 9:55 A.M",      
-            2: "9:55 A.M - 10:50 A.M", 
-            3: "10:50 A.M - 11:00 A.M (Break)",  
-            4: "11:00 A.M - 11:55 A.M", 
-            5: "11:55 A.M - 12:50 P.M", 
-            6: "12:50 P.M - 1:00 P.M (Lunch Break)",  
-            7: "1:00 P.M - 2:00 P.M",
-            8: "2:00 P.M - 3:00 P.M"
-        }
+        self.time_slots = TimeIntervalConstant.time_slots
         
         self.subject_teacher_map = {
             "TCS-531": ["AB01", "PK02"],
@@ -132,6 +126,6 @@ class Timetable:
 
 
 # Usage
-timetable = Timetable()
+timetable = TimetableFitness()
 weekly_schedule = timetable.create_timetable()
 timetable.print_timetable(weekly_schedule)
