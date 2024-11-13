@@ -48,8 +48,8 @@ class TimeIntervalConstant:
 
         try:
             # Format start and end times to ensure they only include hours and minutes
-            start_time = datetime.strptime(start_time, "%H:%M").time()
-            end_time = datetime.strptime(end_time, "%H:%M").time()
+            start_time = str(datetime.strptime(start_time, "%H:%M").time())
+            end_time = str(datetime.strptime(end_time, "%H:%M").time())
 
             for slot, interval in cls.time_slots.items():
                 # Making string in this format: "3:30 - 4:25".
