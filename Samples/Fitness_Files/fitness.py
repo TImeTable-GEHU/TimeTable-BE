@@ -1,9 +1,9 @@
 import random
 from constants.TimeIntervals import TimeIntervalConstant
-
+from constants.constant import WorkingDays
 class TimetableFitness:
     def __init__(self):
-        self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        self.days =WorkingDays.days
         self.sections = ["A", "B", "C", "D"]
         self.time_slots = TimeIntervalConstant.time_slots
 
