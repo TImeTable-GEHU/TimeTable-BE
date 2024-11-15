@@ -1,0 +1,108 @@
+[
+    {
+        "Monday": [
+            {
+                "SectionA": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"},
+                    {"time": "11:10 - 12:05", "subject": "CSP-501", "teacher": "AK23", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"}
+                ]
+            },
+            {
+                "SectionB": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"},
+                    {"time": "12:05 - 1:00", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            },
+            {
+                "SectionC": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"},
+                    {"time": "11:10 - 12:05", "subject": "CSP-501", "teacher": "AK23", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"}
+                ]
+            },
+            {
+                "SectionD": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"},
+                    {"time": "12:05 - 1:00", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            }
+        ],
+        "Tuesday": [
+            {
+                "SectionA": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"}
+                ]
+            },
+            {
+                "SectionB": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            },
+            {
+                "SectionC": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"},
+                    {"time": "11:10 - 12:05", "subject": "CSP-501", "teacher": "AK23", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"}
+                ]
+            },
+            {
+                "SectionD": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"},
+                    {"time": "12:05 - 1:00", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            }
+        ],
+        "Wednesday": [
+            {
+                "SectionA": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"}
+                ]
+            },
+            {
+                "SectionB": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            },
+            {
+                "SectionC": [
+                    {"time": "9:00 - 9:55", "subject": "TCS-502", "teacher": "SS03", "room": "R1"},
+                    {"time": "9:55 - 10:50", "subject": "SCS-501", "teacher": "AP24", "room": "R1"},
+                    {"time": "11:10 - 12:05", "subject": "CSP-501", "teacher": "AK23", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"},
+                    {"time": "12:05 - 1:00", "subject": "TCS-503", "teacher": "SP06", "room": "R1"}
+                ]
+            },
+            {
+                "SectionD": [
+                    {"time": "9:00 - 9:55", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "9:55 - 10:50", "subject": "PMA-502", "teacher": "PM14", "room": "R2"},
+                    {"time": "11:10 - 12:05", "subject": "PCS-503", "teacher": "RS11", "room": "R2"},
+                    {"time": "12:05 - 1:00", "subject": "PCS-503", "teacher": "RS11", "room": "R2"}
+                ]
+            }
+        ]
+    }
+]
+
+
+[
+    # nickname: fitness score
+    "ABCBCwr3": 12
+]
