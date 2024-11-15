@@ -140,7 +140,7 @@ class TimetableGeneration:
             day_schedule[section] = section_schedule
         return day_schedule
 
-    def create_timetable(self, num_weeks=1):
+    def create_timetable(self, num_weeks=5):
         timetable = {}
         for week in range(1, num_weeks + 1):
             for week_day in self.days:

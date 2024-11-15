@@ -73,7 +73,7 @@ class TimetableFitnessCalculator:
 # Main Execution
 # Generate timetable (chromosome) using TimetableGeneration
 timetable_generator = TimetableGeneration()
-timetable = timetable_generator.create_timetable(2)  # Generate a timetable with 2 weeks
+timetable = timetable_generator.create_timetable(5)  # Generate a timetable with 2 weeks
 
 # Now using the new class for fitness calculation
 fitness_calculator = TimetableFitnessCalculator(timetable)

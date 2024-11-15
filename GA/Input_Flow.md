@@ -170,7 +170,7 @@ This project generates optimized weekly timetables for an institution based on u
 ## Example Input Data
 - **Rooms**:
   ```json
-  {"LTB-05": 200, "Civil Lab": 230, ...}
+  {"R1": 200, "R2": 230, ...}
   ```
 
 - **Subjects**:
@@ -179,171 +179,718 @@ This project generates optimized weekly timetables for an institution based on u
   ```
 
 ## Example Output
-Timetable:
-```
---- Weekly Timetable ---
-
-Week 1
-
-Day: Week 1 - Monday
-  Section: A
-    9:00 - 9:55: TMA-502 (Teacher: BJ10, Room: LTB-05)
-    9:55 - 10:50: TCS-502 (Teacher: SS03, Room: LTB-05)
-    11:10 - 12:05: TCS-509 (Teacher: SJ16, Room: LTB-05)
-    12:05 - 1:00: TCS-503 (Teacher: SP06, Room: LTB-05)
-  ----------------------------------------
-  Section: B
-    9:00 - 9:55: SCS-501 (Teacher: AP24, Room: Civil Lab)
-    9:55 - 10:50: TCS-531 (Teacher: AB01, Room: Civil Lab)
-    11:10 - 12:05: TCS-502 (Teacher: AA04, Room: Civil Lab)
-    12:05 - 1:00: XCS-501 (Teacher: DT20, Room: Civil Lab)
-    1:20 - 2:15: TMA-502 (Teacher: RS11, Room: Civil Lab)
-    2:15 - 3:10: TCS-509 (Teacher: AB17, Room: Civil Lab)
-    3:30 - 4:25: CSP-501 (Teacher: AK23, Room: Civil Lab)
-  ----------------------------------------
-  Section: C
-    9:00 - 9:55: TMA-502 (Teacher: JM12, Room: LTB-07)
-    9:55 - 10:50: TCS-502 (Teacher: AC05, Room: LTB-07)
-    11:10 - 12:05: TCS-509 (Teacher: HP18, Room: LTB-07)
-    12:05 - 1:00: TCS-531 (Teacher: PK02, Room: LTB-07)
-    1:20 - 2:15: XCS-501 (Teacher: PA21, Room: LTB-07)
-    2:15 - 3:10: TCS-503 (Teacher: DP07, Room: LTB-07)
-    3:30 - 4:25: Library (Teacher: None, Room: LTB-07)
-  ----------------------------------------
-  Section: D
-    9:00 - 9:55: TCS-509 (Teacher: SG19, Room: CLA 07(B))
-    9:55 - 10:50: TCS-503 (Teacher: AC05, Room: CLA 07(B))
-    11:10 - 12:05: XCS-501 (Teacher: NB22, Room: CLA 07(B))
-    12:05 - 1:00: TMA-502 (Teacher: NJ13, Room: CLA 07(B))
-  ----------------------------------------
-
-Day: Week 1 - Tuesday
-  Section: A
-    9:55 - 10:50: PCS-503 (Teacher: RS11, Room: LTB-05)
-    9:00 - 9:55: PCS-503 (Teacher: RS11, Room: LTB-05)
-    11:10 - 12:05: CSP-501 (Teacher: AK23, Room: LTB-05)
-    12:05 - 1:00: SCS-501 (Teacher: AP24, Room: LTB-05)
-  ----------------------------------------
-  Section: B
-    9:55 - 10:50: PCS-503 (Teacher: DP07, Room: Civil Lab)
-    9:00 - 9:55: PCS-503 (Teacher: DP07, Room: Civil Lab)
-    11:10 - 12:05: XCS-501 (Teacher: DT20, Room: Civil Lab)
-    12:05 - 1:00: TMA-502 (Teacher: RS11, Room: Civil Lab)
-  ----------------------------------------
-  Section: C
-    9:00 - 9:55: TCS-503 (Teacher: DP07, Room: LTB-07)
-    9:55 - 10:50: TCS-502 (Teacher: AC05, Room: LTB-07)
-    12:05 - 1:00: PCS-503 (Teacher: SP06, Room: LTB-07)
-    11:10 - 12:05: PCS-503 (Teacher: SP06, Room: LTB-07)
-    1:20 - 2:15: XCS-501 (Teacher: PA21, Room: LTB-07)
-    2:15 - 3:10: TMA-502 (Teacher: JM12, Room: LTB-07)
-    3:30 - 4:25: TCS-531 (Teacher: PK02, Room: LTB-07)
-  ----------------------------------------
-  Section: D
-    9:00 - 9:55: TCS-509 (Teacher: SG19, Room: CLA 07(B))
-    9:55 - 10:50: TCS-503 (Teacher: AC05, Room: CLA 07(B))
-    11:10 - 12:05: XCS-501 (Teacher: NB22, Room: CLA 07(B))
-    12:05 - 1:00: TCS-531 (Teacher: AB01, Room: CLA 07(B))
-    2:15 - 3:10: PMA-502 (Teacher: PM14, Room: CLA 07(B))
-    1:20 - 2:15: PMA-502 (Teacher: PM14, Room: CLA 07(B))
-    3:30 - 4:25: TMA-502 (Teacher: NJ13, Room: CLA 07(B))
-  ----------------------------------------
-
-Day: Week 1 - Wednesday
-  Section: A
-    9:00 - 9:55: TCS-509 (Teacher: SJ16, Room: LTB-05)
-    9:55 - 10:50: TCS-531 (Teacher: AB01, Room: LTB-05)
-    11:10 - 12:05: XCS-501 (Teacher: DT20, Room: LTB-05)
-    12:05 - 1:00: CSP-501 (Teacher: AK23, Room: LTB-05)
-    1:20 - 2:15: TMA-502 (Teacher: BJ10, Room: LTB-05)
-    2:15 - 3:10: TCS-502 (Teacher: SS03, Room: LTB-05)
-    3:30 - 4:25: SCS-501 (Teacher: AP24, Room: LTB-05)
-  ----------------------------------------
-  Section: B
-    9:00 - 9:55: TCS-531 (Teacher: AB01, Room: Civil Lab)
-    9:55 - 10:50: XCS-501 (Teacher: PA21, Room: Civil Lab)
-    12:05 - 1:00: PCS-503 (Teacher: RS11, Room: Civil Lab)
-    11:10 - 12:05: PCS-503 (Teacher: RS11, Room: Civil Lab)
-  ----------------------------------------
-  Section: C
-    9:00 - 9:55: TCS-502 (Teacher: AC05, Room: LTB-07)
-    9:55 - 10:50: TMA-502 (Teacher: JM12, Room: LTB-07)
-    12:05 - 1:00: PCS-506 (Teacher: AD08, Room: LTB-07)
-    11:10 - 12:05: PCS-506 (Teacher: AD08, Room: LTB-07)
-  ----------------------------------------
-  Section: D
-    9:00 - 9:55: XCS-501 (Teacher: NB22, Room: CLA 07(B))
-    9:55 - 10:50: TMA-502 (Teacher: NJ13, Room: CLA 07(B))
-    11:10 - 12:05: TCS-503 (Teacher: AC05, Room: CLA 07(B))
-    12:05 - 1:00: TCS-509 (Teacher: SG19, Room: CLA 07(B))
-    1:20 - 2:15: TCS-531 (Teacher: AB01, Room: CLA 07(B))
-    2:15 - 3:10: TCS-502 (Teacher: SS03, Room: CLA 07(B))
-    3:30 - 4:25: Library (Teacher: None, Room: CLA 07(B))
-  ----------------------------------------
-
-Day: Week 1 - Thursday
-  Section: A
-    9:00 - 9:55: CSP-501 (Teacher: AK23, Room: LTB-05)
-    9:55 - 10:50: TCS-502 (Teacher: SS03, Room: LTB-05)
-    11:10 - 12:05: TCS-503 (Teacher: SP06, Room: LTB-05)
-    12:05 - 1:00: TCS-531 (Teacher: AB01, Room: LTB-05)
-  ----------------------------------------
-  Section: B
-    9:00 - 9:55: TCS-509 (Teacher: AB17, Room: Civil Lab)
-    9:55 - 10:50: TMA-502 (Teacher: RS11, Room: Civil Lab)
-    11:10 - 12:05: TCS-503 (Teacher: SP06, Room: Civil Lab)
-    12:05 - 1:00: XCS-501 (Teacher: DT20, Room: Civil Lab)
-    1:20 - 2:15: TCS-531 (Teacher: AB01, Room: Civil Lab)
-    2:15 - 3:10: TCS-502 (Teacher: AA04, Room: Civil Lab)
-    3:30 - 4:25: SCS-501 (Teacher: AP24, Room: Civil Lab)
-  ----------------------------------------
-  Section: C
-    9:00 - 9:55: TCS-503 (Teacher: DP07, Room: LTB-07)
-    9:55 - 10:50: XCS-501 (Teacher: PA21, Room: LTB-07)
-    11:10 - 12:05: TCS-509 (Teacher: HP18, Room: LTB-07)
-    12:05 - 1:00: TMA-502 (Teacher: BJ10, Room: LTB-07)
-  ----------------------------------------
-  Section: D
-    9:00 - 9:55: TCS-509 (Teacher: SJ16, Room: CLA 07(B))
-    9:55 - 10:50: XCS-501 (Teacher: NB22, Room: CLA 07(B))
-    12:05 - 1:00: PCS-503 (Teacher: RS11, Room: CLA 07(B))
-    11:10 - 12:05: PCS-503 (Teacher: RS11, Room: CLA 07(B))
-    1:20 - 2:15: TCS-531 (Teacher: AB01, Room: CLA 07(B))
-    2:15 - 3:10: TCS-503 (Teacher: DP07, Room: CLA 07(B))
-    3:30 - 4:25: TCS-502 (Teacher: SS03, Room: CLA 07(B))
-  ----------------------------------------
-
-Day: Week 1 - Friday
-  Section: A
-    9:00 - 9:55: TCS-509 (Teacher: SJ16, Room: LTB-05)
-    9:55 - 10:50: TCS-503 (Teacher: SP06, Room: LTB-05)
-    11:10 - 12:05: TCS-531 (Teacher: AB01, Room: LTB-05)
-    12:05 - 1:00: SCS-501 (Teacher: AP24, Room: LTB-05)
-    1:20 - 2:15: CSP-501 (Teacher: AK23, Room: LTB-05)
-    2:15 - 3:10: TMA-502 (Teacher: BJ10, Room: LTB-05)
-    3:30 - 4:25: TCS-502 (Teacher: SS03, Room: LTB-05)
-  ----------------------------------------
-  Section: B
-    9:00 - 9:55: TCS-502 (Teacher: AA04, Room: Civil Lab)
-    9:55 - 10:50: TMA-502 (Teacher: BJ10, Room: Civil Lab)
-    12:05 - 1:00: PCS-503 (Teacher: RS11, Room: Civil Lab)
-    11:10 - 12:05: PCS-503 (Teacher: RS11, Room: Civil Lab)
-  ----------------------------------------
-  Section: C
-    9:00 - 9:55: TCS-531 (Teacher: PK02, Room: LTB-07)
-    9:55 - 10:50: TCS-509 (Teacher: HP18, Room: LTB-07)
-    11:10 - 12:05: XCS-501 (Teacher: DT20, Room: LTB-07)
-    12:05 - 1:00: TCS-503 (Teacher: SP06, Room: LTB-07)
-  ----------------------------------------
-  Section: D
-    9:55 - 10:50: PCS-506 (Teacher: AD08, Room: CLA 07(B))
-    9:00 - 9:55: PCS-506 (Teacher: AD08, Room: CLA 07(B))
-    11:10 - 12:05: XCS-501 (Teacher: PA21, Room: CLA 07(B))
-    12:05 - 1:00: TCS-509 (Teacher: SJ16, Room: CLA 07(B))
-    2:15 - 3:10: Placement_Class (Teacher: AK26, Room: CLA 07(B))
-    1:20 - 2:15: Placement_Class (Teacher: AK26, Room: CLA 07(B))
-    3:30 - 4:25: TCS-531 (Teacher: AB01, Room: CLA 07(B))
-
+[
+    {
+        "Week 1 - Monday": {
+            "A": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R1",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "BJ10",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R1",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "SJ16",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R1",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "DT20",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R1",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ],
+            "B": [
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L5",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L5",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AB17",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R2",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "PA21",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ],
+            "C": [
+                {
+                    "teacher_id": "SP06",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R3",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R3",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L5",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L5",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L4",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L4",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R3",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "D": [
+                {
+                    "teacher_id": "NB22",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R4",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R4",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L1",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L1",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R4",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "JM12",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R4",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "PK02",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R4",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ]
+        },
+        "Week 1 - Tuesday": {
+            "A": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R1",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R1",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L5",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L5",
+                    "time_slot": "11:10 - 12:05"
+                }
+            ],
+            "B": [
+                {
+                    "teacher_id": "SP06",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R2",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "PK02",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R2",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L2",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L2",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R2",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "BJ10",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R2",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "C": [
+                {
+                    "teacher_id": "SJ16",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R3",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "DT20",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R3",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R3",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R3",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R3",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R3",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R3",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "D": [
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L2",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L2",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AC05",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R4",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "PA21",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R4",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ]
+        },
+        "Week 1 - Wednesday": {
+            "A": [
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L3",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L3",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R1",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "SJ16",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R1",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ],
+            "B": [
+                {
+                    "teacher_id": "BJ10",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R2",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "SS03",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R2",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "SP06",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R2",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "DT20",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L1",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L1",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "AB17",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R2",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "C": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R3",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "HP18",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R3",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R3",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R3",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ],
+            "D": [
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L4",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "PCS-503",
+                    "classroom_id": "L4",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AC05",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R4",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R4",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "PK02",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R4",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "AA04",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R4",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "PA21",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R4",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ]
+        },
+        "Week 1 - Thursday": {
+            "A": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R1",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "DT20",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R1",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L4",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L4",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R1",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "SS03",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R1",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R1",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "B": [
+                {
+                    "teacher_id": "SJ16",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R2",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "BJ10",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R2",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "SP06",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R2",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "PK02",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R2",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AA04",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R2",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "PA21",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "C": [
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R3",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AC05",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R3",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R3",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R3",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ],
+            "D": [
+                {
+                    "teacher_id": "SS03",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R4",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R4",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "RD09",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L3",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "RD09",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L3",
+                    "time_slot": "11:10 - 12:05"
+                }
+            ]
+        },
+        "Week 1 - Friday": {
+            "A": [
+                {
+                    "teacher_id": "SP06",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R1",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "SS03",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R1",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "DT20",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R1",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "BJ10",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R1",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "AB01",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R1",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R1",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "SJ16",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R1",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "B": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R2",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "PA21",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AB17",
+                    "subject_id": "TCS-509",
+                    "classroom_id": "R2",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R2",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "PK02",
+                    "subject_id": "TCS-531",
+                    "classroom_id": "R2",
+                    "time_slot": "1:20 - 2:15"
+                },
+                {
+                    "teacher_id": "DP07",
+                    "subject_id": "TCS-503",
+                    "classroom_id": "R2",
+                    "time_slot": "2:15 - 3:10"
+                },
+                {
+                    "teacher_id": "AA04",
+                    "subject_id": "TCS-502",
+                    "classroom_id": "R2",
+                    "time_slot": "3:30 - 4:25"
+                }
+            ],
+            "C": [
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L1",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AD08",
+                    "subject_id": "PCS-506",
+                    "classroom_id": "L1",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L1",
+                    "time_slot": "12:05 - 1:00"
+                },
+                {
+                    "teacher_id": "PM14",
+                    "subject_id": "PMA-502",
+                    "classroom_id": "L1",
+                    "time_slot": "11:10 - 12:05"
+                }
+            ],
+            "D": [
+                {
+                    "teacher_id": "AK23",
+                    "subject_id": "CSP-501",
+                    "classroom_id": "R4",
+                    "time_slot": "9:00 - 9:55"
+                },
+                {
+                    "teacher_id": "NB22",
+                    "subject_id": "XCS-501",
+                    "classroom_id": "R4",
+                    "time_slot": "9:55 - 10:50"
+                },
+                {
+                    "teacher_id": "AP24",
+                    "subject_id": "SCS-501",
+                    "classroom_id": "R4",
+                    "time_slot": "11:10 - 12:05"
+                },
+                {
+                    "teacher_id": "RS11",
+                    "subject_id": "TMA-502",
+                    "classroom_id": "R4",
+                    "time_slot": "12:05 - 1:00"
+                }
+            ]
+        }
 
 ## Technologies Used
 - **Front-End**: Html,CSS and JavaScript.
