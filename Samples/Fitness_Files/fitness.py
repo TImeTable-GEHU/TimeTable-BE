@@ -23,8 +23,8 @@ class TimetableFitness:
             "Placement_Class": ["AK26"]
         }
 
-        self.classrooms = ["R1", "R2", "R3", "R4", "R5"]
-        self.room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
+        self.classrooms = ["LTB-05", "Civil Lab", "LTB-07", "CLA 07(B)", "R5"]
+        self.room_capacity = {"LTB-05": 200, "Civil Lab": 230, "LTB-07": 240, "CLA 07(B)": 250, "R5": 250}
         self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
         self.teacher_schedule = {slot: {} for slot in self.time_slots}
         self.room_schedule = {slot: {} for slot in self.time_slots}
