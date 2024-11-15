@@ -346,9 +346,9 @@ Day: Week 1 - Friday
 
 
 ## Technologies Used
-- **Front-End**: Django.
-- **Back-End**: Python with GA.
-- **Database**: 
+- **Front-End**: Html,CSS and JavaScript.
+- **Back-End**: Django,Python with GA.
+- **Database**: MongoDB.
 
 
 ### **7. Code Structure**
