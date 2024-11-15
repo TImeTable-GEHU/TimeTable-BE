@@ -86,5 +86,5 @@ output = [
 ]
 
 # Save the updated fitness score data into the JSON file
-with open("GA/Sample_Chromosome_with_fitness.json", "w") as f:
+with open("GA/Chromosome_with_fitness.json", "w") as f:
     json.dump(output, f, indent=4)
