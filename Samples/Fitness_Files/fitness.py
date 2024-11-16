@@ -156,72 +156,86 @@ class TimetableFitness:
     def create_timetable(self, num_weeks=1):
         timetable = {}
         for week in range(1, num_weeks + 1):
+            week_schedule = {}
             for week_day in self.days:
                 half_day_sections = random.sample(self.sections, len(self.sections) // 2)
-                timetable[f"Week {week} - {week_day}"] = self.generate_day_schedule(week_day, half_day_sections, week)
+                week_schedule[week_day] = self.generate_day_schedule(week_day, half_day_sections, week)
+            timetable[f"Week {week}"] = week_schedule
         return timetable
 
     def calculate_fitness(self, chromosome):
-        overall_fitness_score = 0
-        section_fitness_scores = {}
+        week_fitness_scores = []
 
-        for day, day_schedule in chromosome.items():
-            section_fitness_scores[day] = {}
-            for section, section_schedule in day_schedule.items():
-                section_score = 100
-                teacher_time_slots = {}
-                classroom_time_slots = {}
-                teacher_load = {}
+        # Track fitness score for each week
+        for week_num, (week, week_schedule) in enumerate(chromosome.items(), start=1):
+            overall_fitness_score = 0
+            section_fitness_scores = {}
 
-                for item in section_schedule:
-                    teacher = item['teacher_id']
-                    classroom = item['classroom_id']
-                    time_slot = item['time_slot']
-                    strength = self.section_strength.get(section, 0)
+            # Ensure that week_schedule is a dictionary and process day-wise schedules
+            for day, day_schedule in week_schedule.items():
+                section_fitness_scores[day] = {}
 
-                    if "Break" in time_slot:
-                        continue
+                # Ensure that day_schedule is a dictionary for sections and their schedules
+                for section, section_schedule in day_schedule.items():
+                    section_score = 100
+                    teacher_time_slots = {}
+                    classroom_time_slots = {}
+                    teacher_load = {}
 
-                    if (teacher, time_slot) in teacher_time_slots:
-                        section_score -= 30
-                    else:
-                        teacher_time_slots[(teacher, time_slot)] = section
+                    for item in section_schedule:
+                        teacher = item['teacher_id']
+                        classroom = item['classroom_id']
+                        time_slot = item['time_slot']
+                        strength = self.section_strength.get(section, 0)
 
-                    if (classroom, time_slot) in classroom_time_slots:
-                        section_score -= 20
-                    else:
-                        classroom_time_slots[(classroom, time_slot)] = section
+                        if "Break" in time_slot:
+                            continue
 
-                    if teacher not in teacher_load:
-                        teacher_load[teacher] = []
-                    teacher_load[teacher].append(time_slot)
+                        if (teacher, time_slot) in teacher_time_slots:
+                            section_score -= 30
+                        else:
+                            teacher_time_slots[(teacher, time_slot)] = section
 
-                    if strength > self.room_capacity.get(classroom, 0):
-                        section_score -= 25
+                        if (classroom, time_slot) in classroom_time_slots:
+                            section_score -= 20
+                        else:
+                            classroom_time_slots[(classroom, time_slot)] = section
 
-                    preferred_slots = self.teacher_preferences.get(teacher, [])
-                    if time_slot not in preferred_slots:
-                        section_score -= 5
+                        if teacher not in teacher_load:
+                            teacher_load[teacher] = []
+                        teacher_load[teacher].append(time_slot)
 
-                for teacher, time_slots in teacher_load.items():
-                    if len(time_slots) > self.teacher_work_load.get(teacher, 5):
-                        section_score -= 10
+                        if strength > self.room_capacity.get(classroom, 0):
+                            section_score -= 25
 
-                section_fitness_scores[day][section] = section_score
-                overall_fitness_score += section_score
+                        preferred_slots = self.teacher_preferences.get(teacher, [])
+                        if time_slot not in preferred_slots:
+                            section_score -= 5
 
-        return overall_fitness_score, section_fitness_scores
+                    for teacher, time_slots in teacher_load.items():
+                        if len(time_slots) > self.teacher_work_load.get(teacher, 5):
+                            section_score -= 10
 
+                    section_fitness_scores[day][section] = section_score
+                    overall_fitness_score += section_score
+
+            week_fitness_scores.append({
+                "week": f"Week {week_num}",
+                "score": overall_fitness_score
+            })
+
+        return week_fitness_scores, section_fitness_scores
 
 # Main Execution
 timetable_fitness = TimetableFitness()
 timetable = timetable_fitness.create_timetable(2)
-overall_fitness, fitness_scores = timetable_fitness.calculate_fitness(timetable)
+week_fitness_scores, fitness_scores = timetable_fitness.calculate_fitness(timetable)
 
-output = [
-    timetable,
-    {"fitness_scores": fitness_scores}
-]
+output = {
+    "timetable": timetable,
+    "week_fitness_scores": week_fitness_scores,
+    "section_fitness_scores": fitness_scores
+}
 
 # Save output to a JSON file
 with open("Samples/Sample_Chromosome.json", "w") as f:
