@@ -7,7 +7,9 @@ from constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
+    TeacherPreferences  
 )
+
 
 class TimetableGeneration:
     def __init__(self):
@@ -20,6 +22,7 @@ class TimetableGeneration:
         self.section_strength = RoomCapacity.section_strength
         self.subject_quota = SubjectQuota.subject_quota
         self.time_slots = TimeIntervalConstant.time_slots
+        self.teacher_preferences = TeacherPreferences.teacher_preferences
 
         self.section_rooms = {
             section: self.classrooms[i % len(self.classrooms)]
@@ -81,6 +84,12 @@ class TimetableGeneration:
                             teacher = next(teacher_iter)
                             subject_teacher_usage[subject] = teacher_iter
 
+                        # Check teacher preferences
+                        preferred_slots = self.teacher_preferences.get(teacher, [])
+                        if index not in preferred_slots:
+                            available_subjects.remove(subject)
+                            continue
+
                         break
 
                     available_subjects.remove(subject)
@@ -123,11 +132,3 @@ class TimetableGeneration:
                 half_day_sections = random.sample(self.sections, len(self.sections) // 2)
                 timetable[f"Week {week} - {week_day}"] = self.generate_day_schedule(week_day, half_day_sections, week)
         return timetable
-
-
-# Example usage
-if __name__ == "__main__":
-    generator = TimetableGeneration()
-    timetable = generator.create_timetable(num_weeks=2)
-    for week_day, schedule in timetable.items():
-        print(f"{week_day}: {schedule}")
