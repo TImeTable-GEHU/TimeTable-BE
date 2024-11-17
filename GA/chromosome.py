@@ -1,82 +1,134 @@
 import random
 from constants.TimeIntervals import TimeIntervalConstant
-from constants.constant import WorkingDays
+from constants.constant import (
+    WorkingDays,
+    Sections,
+    SubjectTeacherMap,
+    Classrooms,
+    RoomCapacity,
+    SubjectQuota,
+    TeacherPreferences  
+)
 
-class Chromosome:
+
+class TimetableGeneration:
     def __init__(self):
-        self.sections = ["A", "B", "C", "D"]
-        self.time_slots = TimeIntervalConstant.time_slots
         self.days = WorkingDays.days
-        self.subject_teacher_map = {
-            "TCS-531": ["AB01", "PK02"],
-            "TCS-502": ["SS03", "AA04", "AC05"],
-            "TCS-503": ["SP06", "DP07", "AC05"],
-            "PCS-506": ["AD08", "RD09"],
-            "TMA-502": ["BJ10", "RS11", "JM12", "NJ13"],
-            "PMA-502": ["PM14", "AD08", "AA15"],
-            "TCS-509": ["SJ16", "AB17", "HP18", "SG19"],
-            "XCS-501": ["DT20", "PA21", "NB22"],
-            "CSP-501": ["AK23"],
-            "SCS-501": ["AP24"]
+        self.sections = Sections.sections
+        self.subject_teacher_map = SubjectTeacherMap.subject_teacher_map
+        self.classrooms = Classrooms.classrooms
+        self.lab = Classrooms.labs
+        self.room_capacity = RoomCapacity.room_capacity
+        self.section_strength = RoomCapacity.section_strength
+        self.subject_quota = SubjectQuota.subject_quota
+        self.time_slots = TimeIntervalConstant.time_slots
+        self.teacher_preferences = TeacherPreferences.teacher_preferences
+
+        self.section_rooms = {
+            section: self.classrooms[i % len(self.classrooms)]
+            for i, section in enumerate(self.sections)
         }
-        self.classrooms = ["R1", "R2", "R3", "R4", "R5"]
-        self.room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
-        self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
 
-    def create_chromosome(self):
-        schedule = {}
-        teacher_schedule = {slot: {} for slot in self.time_slots}
-        room_schedule = {slot: {} for slot in self.time_slots}
+    def generate_day_schedule(self, day, half_day_sections, week_number):
+        day_schedule = {}
+        subject_teacher_usage = {
+            subject: iter(teachers)
+            for subject, teachers in self.subject_teacher_map.items()
+        }
 
-        for day in self.days:
-            schedule[day] = {}
-            for section in self.sections:
-                schedule[day][section] = []
-                for time_slot in self.time_slots:
-                    # Randomly choose a subject, teacher, and classroom
-                    subject = random.choice(list(self.subject_teacher_map.keys()))
-                    teacher = random.choice(self.subject_teacher_map[subject])
-                    classroom = random.choice(self.classrooms)
+        section_subject_count = {
+            section: {subject: 0 for subject in self.subject_teacher_map.keys()}
+            for section in self.sections
+        }
 
-                    if (teacher not in teacher_schedule[time_slot] and
-                            section not in room_schedule[time_slot].get(classroom, [])):
-                        entry = {
-                            "teacher_id": teacher,
-                            "subject_id": subject,
-                            "classroom_id": classroom,
-                            "time_slot": time_slot
-                        }
-                        schedule[day][section].append(entry)
-                        # Update schedules to avoid conflicts
-                        teacher_schedule[time_slot][teacher] = True
-                        if classroom not in room_schedule[time_slot]:
-                            room_schedule[time_slot][classroom] = []
-                        room_schedule[time_slot][classroom].append(section)
-        return schedule
+        for section in self.sections:
+            section_schedule = []
+            subjects_used_today = set()
+            current_room = self.section_rooms[section]
+            num_slots = 4 if section in half_day_sections else 7
 
-    def create_multiple_chromosomes(self, num_chromosomes):
-        chromosomes = []
-        for _ in range(num_chromosomes):
-            chromosomes.append(self.create_chromosome())
-        return chromosomes
+            for index in range(1, num_slots + 1):
+                time_slot = self.time_slots[index]
 
-    def print_chromosomes(self, chromosomes):
-            for idx, chromosome in enumerate(chromosomes, 1):
-                print(f"\nChromosome {idx}:")
-                for day, sections in chromosome.items():
-                    print(f"  {day}:")
-                    for section, schedule in sections.items():
-                        print(f"    Section {section}:")
-                        for entry in schedule:
-                            print(f"      Time Slot: {entry['time_slot']}")
-                            print(f"        Teacher ID: {entry['teacher_id']}")
-                            print(f"        Subject ID: {entry['subject_id']}")
-                            print(f"        Classroom ID: {entry['classroom_id']}")
-                        print()
+                if any(item['time_slot'] == time_slot for item in section_schedule):
+                    continue
 
+                available_subjects = list(self.subject_teacher_map.keys())
+                subject, teacher = None, None
+                is_lab = False
 
-if __name__ == "__main__":
-    chromosome_constant = Chromosome()
-    num_chromosomes = 10
-    random_chromosomes = chromosome_constant.create_multiple_chromosomes(num_chromosomes)
-    chromosome_constant.print_chromosomes(random_chromosomes)
+                while available_subjects:
+                    subject = random.choice(available_subjects)
+
+                    if section_subject_count[section][subject] >= self.subject_quota[subject]:
+                        available_subjects.remove(subject)
+                        continue
+
+                    if subject == "Placement_Class" and index != 6:
+                        available_subjects.remove(subject)
+                        continue
+
+                    if "Placement_Class" in subject or "PCS" in subject or "PMA" in subject:
+                        if index not in [1, 3, 5]:
+                            available_subjects.remove(subject)
+                            continue
+                        is_lab = True
+
+                    if subject not in subjects_used_today:
+                        teacher_iter = subject_teacher_usage[subject]
+
+                        try:
+                            teacher = next(teacher_iter)
+                        except StopIteration:
+                            teacher_iter = iter(self.subject_teacher_map[subject])
+                            teacher = next(teacher_iter)
+                            subject_teacher_usage[subject] = teacher_iter
+
+                        # Check teacher preferences
+                        preferred_slots = self.teacher_preferences.get(teacher, [])
+                        if index not in preferred_slots:
+                            available_subjects.remove(subject)
+                            continue
+
+                        break
+
+                    available_subjects.remove(subject)
+
+                if subject is None or teacher is None:
+                    subject, teacher = "Library", "None"
+
+                subjects_used_today.add(subject)
+
+                if is_lab:
+                    assigned_room = random.choice(self.lab)
+                else:
+                    assigned_room = current_room
+
+                if is_lab and index + 1 <= num_slots:
+                    next_time_slot = self.time_slots[index + 1]
+                    section_schedule.append({
+                        "teacher_id": teacher,
+                        "subject_id": subject,
+                        "classroom_id": assigned_room,
+                        "time_slot": next_time_slot
+                    })
+                    section_subject_count[section][subject] += 1
+
+                section_schedule.append({
+                    "teacher_id": teacher,
+                    "subject_id": subject,
+                    "classroom_id": assigned_room,
+                    "time_slot": time_slot
+                })
+                section_subject_count[section][subject] += 1
+
+            day_schedule[section] = section_schedule
+        return day_schedule
+
+    def create_timetable(self, num_weeks=5):
+        timetable = {}
+        for week in range(1, num_weeks + 1):
+            for week_day in self.days:
+                half_day_sections = random.sample(self.sections, len(self.sections) // 2)
+                timetable[f"Week {week} - {week_day}"] = self.generate_day_schedule(week_day, half_day_sections, week)
+        return timetable
