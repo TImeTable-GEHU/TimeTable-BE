@@ -1,68 +1,74 @@
 import random
 from collections import defaultdict
+from constants.constant import SectionsConstants
 
-ATTRIBUTE_WEIGHTS = {
-    'good_cgpa': 1,         # 2^0
-    'average_cgpa': 2,      # 2^1
-    'hostler': 4,           # 2^2
-    'non_hostler': 8        # 2^3
-}
+class StudentScorer:
+    def __init__(self, attribute_weights=SectionsConstants.ATTRIBUTE_WEIGHTS, attribute_conditions=SectionsConstants.ATTRIBUTE_CONDITIONS):
+        self.attribute_weights = attribute_weights
+        self.attribute_conditions = attribute_conditions
 
-CGPA_THRESHOLD = 9.0
+    def calculate_student_score(self, student):
+        """Calculate the binary score for a student based on defined attributes and conditions."""
+        score = 0
+        for attribute, weight in self.attribute_weights.items():
+            if self.attribute_conditions[attribute](student):
+                score += weight
+        return score
 
-def calculate_student_score(student):
-    score = 0
-    if student['CGPA'] >= CGPA_THRESHOLD:
-        score += ATTRIBUTE_WEIGHTS['good_cgpa']
-    else:
-        score += ATTRIBUTE_WEIGHTS['average_cgpa']
+    def assign_scores_to_students(self, students):
+        """Assign binary scores to a list of students."""
+        for student in students:
+            student['Score'] = self.calculate_student_score(student)
+        return students
 
-    if student['Hostler']:
-        score += ATTRIBUTE_WEIGHTS['hostler']
-    else:
-        score += ATTRIBUTE_WEIGHTS['non_hostler']
-    return score
+    def generate_students(self, num_students=500):
+        """Generate random student data."""
+        return [
+            {
+                'ID': i,
+                'CGPA': round(random.uniform(6.0, 9.8), 2),
+                'Hostler': random.choice([True, False])
+            }
+            for i in range(1, num_students + 1)
+        ]
+    def divide_students_into_sections(self, students, class_strength):
+        """Divide students into sections based on their scores and class strength."""
+        # Group students by score
+        grouped_by_score = defaultdict(list)
+        for student in students:
+            grouped_by_score[student['Score']].append(student)
 
-def divide_students(students, class_strength):
-    # Group students by score
-    grouped_by_score = defaultdict(list)
-    for student in students:
-        score = calculate_student_score(student)
-        student['Score'] = score
-        grouped_by_score[score].append(student)
+        # Distribute students into sections, keeping same-score students together
+        sections = []
+        current_section = []
 
-    sections = []
-    current_section = []
+        for score_group in grouped_by_score.values():
+            for student in score_group:
+                if len(current_section) < class_strength:
+                    current_section.append(student)
+                else:
+                    sections.append(current_section)
+                    current_section = [student]
 
-    for score_group in grouped_by_score.values():
-        for student in score_group:
-            if len(current_section) < class_strength:
-                current_section.append(student)
-            else:
-                sections.append(current_section)
-                current_section = [student]
+        if current_section:
+            sections.append(current_section)
 
-    if current_section:
-        sections.append(current_section)
+        return sections
 
-    return sections
 
-def generate_students(num_students=500):
-    students = []
-    for i in range(1, num_students + 1):
-        student = {
-            'ID': i,
-            'CGPA': round(random.uniform(5.0, 9.8), 2),
-            'Hostler': random.choice([True, False])
-        }
-        students.append(student)
-    return students
+if __name__ == "__main__":
+    scorer = StudentScorer()
 
-students = generate_students(500)
-class_strength = 100
-sections = divide_students(students, class_strength)
+    # Generate students and assign scores
+    students = scorer.generate_students(500)  # Example with 10 students
+    students_with_scores = scorer.assign_scores_to_students(students)
 
-for i, section in enumerate(sections):
-    print(f"Section {i + 1} (Total Students: {len(section)}):")
-    for student in section:
-        print(f"  Student ID: {student['ID']}, CGPA: {student['CGPA']}, Hostler: {student['Hostler']}, Score: {student['Score']}")
+    # Divide students into sections with a maximum class strength
+    class_strength = 100
+    sections = scorer.divide_students_into_sections(students_with_scores, class_strength)
+
+    # Display the sections
+    for i, section in enumerate(sections, 1):
+        print(f"Section {i} (Total Students: {len(section)}):")
+        for student in section:
+            print(f"  Student ID: {student['ID']}, CGPA: {student['CGPA']}, Hostler: {student['Hostler']}, Score: {student['Score']}")
