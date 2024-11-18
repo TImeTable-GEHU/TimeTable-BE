@@ -7,7 +7,8 @@ from constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
-    TeacherPreferences  
+    TeacherPreferences,
+    SpecialSubjects
 )
 
 
@@ -23,56 +24,56 @@ class TimetableGeneration:
         self.subject_quota = SubjectQuota.subject_quota
         self.time_slots = TimeIntervalConstant.time_slots
         self.teacher_preferences = TeacherPreferences.teacher_preferences
+        self.special_subjects = SpecialSubjects.special_subjects
 
+        # Map each section to a classroom in a round-robin fashion
         self.section_rooms = {
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
 
-    def generate_day_schedule(self, day, half_day_sections, week_number):
+    def generate_day_schedule(self, week_day, half_day_sections, weekly_subject_count):
         day_schedule = {}
         subject_teacher_usage = {
             subject: iter(teachers)
             for subject, teachers in self.subject_teacher_map.items()
         }
 
-        section_subject_count = {
-            section: {subject: 0 for subject in self.subject_teacher_map.keys()}
-            for section in self.sections
-        }
-
         for section in self.sections:
             section_schedule = []
             subjects_used_today = set()
             current_room = self.section_rooms[section]
-            num_slots = 4 if section in half_day_sections else 7
+            num_slots = 4 if section in half_day_sections else 7  # Half-day or full-day schedule
 
-            for index in range(1, num_slots + 1):
+            index = 1  # Start from the first time slot
+            while index <= num_slots:
                 time_slot = self.time_slots[index]
 
+                # Skip if a schedule for the time slot already exists
                 if any(item['time_slot'] == time_slot for item in section_schedule):
+                    index += 1
                     continue
 
                 available_subjects = list(self.subject_teacher_map.keys())
                 subject, teacher = None, None
                 is_lab = False
+                requires_two_slots = False
 
                 while available_subjects:
                     subject = random.choice(available_subjects)
 
-                    if section_subject_count[section][subject] >= self.subject_quota[subject]:
+                    # Check if the subject's weekly quota has been exceeded
+                    if weekly_subject_count[section][subject] >= self.subject_quota.get(subject, 0):
                         available_subjects.remove(subject)
                         continue
 
-                    if subject == "Placement_Class" and index != 6:
-                        available_subjects.remove(subject)
-                        continue
-
-                    if "Placement_Class" in subject or "PCS" in subject or "PMA" in subject:
-                        if index not in [1, 3, 5]:
+                    # Check if the subject is a special subject and needs a lab
+                    if subject in self.special_subjects:
+                        if index not in [1, 3, 5]:  # Special subjects only allowed in specific slots
                             available_subjects.remove(subject)
                             continue
                         is_lab = True
+                        requires_two_slots = True
 
                     if subject not in subjects_used_today:
                         teacher_iter = subject_teacher_usage[subject]
@@ -84,9 +85,9 @@ class TimetableGeneration:
                             teacher = next(teacher_iter)
                             subject_teacher_usage[subject] = teacher_iter
 
-                        # Check teacher preferences
+                        # Check teacher's time slot preferences
                         preferred_slots = self.teacher_preferences.get(teacher, [])
-                        if index not in preferred_slots:
+                        if time_slot not in preferred_slots:
                             available_subjects.remove(subject)
                             continue
 
@@ -94,17 +95,23 @@ class TimetableGeneration:
 
                     available_subjects.remove(subject)
 
+                # If no subject or teacher is available, assign "Library"
                 if subject is None or teacher is None:
                     subject, teacher = "Library", "None"
+                    requires_two_slots = False  # Library doesn't need consecutive slots
 
-                subjects_used_today.add(subject)
+                assigned_room = random.choice(self.lab) if is_lab else current_room
 
-                if is_lab:
-                    assigned_room = random.choice(self.lab)
-                else:
-                    assigned_room = current_room
+                # Add the schedule for the time slot
+                section_schedule.append({
+                    "teacher_id": teacher,
+                    "subject_id": subject,
+                    "classroom_id": assigned_room,
+                    "time_slot": time_slot
+                })
 
-                if is_lab and index + 1 <= num_slots:
+                # Handle special subjects requiring two consecutive slots
+                if requires_two_slots and index + 1 <= num_slots:
                     next_time_slot = self.time_slots[index + 1]
                     section_schedule.append({
                         "teacher_id": teacher,
@@ -112,23 +119,34 @@ class TimetableGeneration:
                         "classroom_id": assigned_room,
                         "time_slot": next_time_slot
                     })
-                    section_subject_count[section][subject] += 1
+                    index += 1  # Skip the next slot since it's already used
 
-                section_schedule.append({
-                    "teacher_id": teacher,
-                    "subject_id": subject,
-                    "classroom_id": assigned_room,
-                    "time_slot": time_slot
-                })
-                section_subject_count[section][subject] += 1
+                # Update the weekly subject count for non-Library subjects
+                if subject != "Library":
+                    weekly_subject_count[section][subject] += 1
+                    subjects_used_today.add(subject)
 
+                # Move to the next slot
+                index += 1
+
+            # Store the schedule for this section
             day_schedule[section] = section_schedule
+
         return day_schedule
 
     def create_timetable(self, num_weeks=5):
         timetable = {}
+
         for week in range(1, num_weeks + 1):
+            weekly_subject_count = {
+                section: {subject: 0 for subject in self.subject_teacher_map.keys()}
+                for section in self.sections
+            }
+
             for week_day in self.days:
+                # Randomly select sections that have a half-day schedule
                 half_day_sections = random.sample(self.sections, len(self.sections) // 2)
-                timetable[f"Week {week} - {week_day}"] = self.generate_day_schedule(week_day, half_day_sections, week)
+                day_schedule = self.generate_day_schedule(week_day, half_day_sections, weekly_subject_count)
+                timetable[f"Week {week} - {week_day}"] = day_schedule
+
         return timetable
