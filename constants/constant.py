@@ -13,7 +13,6 @@ class SectionsConstants:
     }
 
     ATTRIBUTE_CONDITIONS = {
-        'good_cgpa': lambda student: student['CGPA'],
         'hostler': lambda student: student['Hostler'],
         # Additional conditions can be added here
     }
