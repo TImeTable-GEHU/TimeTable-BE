@@ -1,7 +1,7 @@
 import random
 import json
-from constants.TimeIntervals import TimeIntervalConstant
-from constants.constant import WorkingDays
+from Constants.time_intervals import TimeIntervalConstant
+from Constants.constant import WorkingDays
 
 class TimetableFitness:
     def __init__(self):
@@ -238,5 +238,5 @@ output = {
 }
 
 # Save output to a JSON file
-with open("Samples/Sample_Chromosome.json", "w") as f:
+with open("Samples/sample_chromosome.json", "w") as f:
     json.dump(output, f, indent=4)

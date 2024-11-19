@@ -1,7 +1,7 @@
 import random
 import json
 from GA.chromosome import TimetableGeneration  # Import from GA package
-from constants.constant import (
+from Constants.constant import (
     WorkingDays,
     Sections,
     SubjectTeacherMap,
@@ -119,7 +119,7 @@ fitness_calculator = TimetableFitnessCalculator(timetable)
 overall_fitness, fitness_scores, weekly_fitness_scores = fitness_calculator.calculate_fitness()
 
 # Save the timetable (chromosome) to a JSON file
-with open("GA/Chromosome.json", "w") as chromosome_file:
+with open("GA/chromosome.json", "w") as chromosome_file:
     json.dump(timetable, chromosome_file, indent=4)
 
 # Save the fitness scores to a separate JSON file
@@ -128,5 +128,5 @@ fitness_output = {
     "weekly_fitness_scores": weekly_fitness_scores
 }
 
-with open("GA/Fitness.json", "w") as fitness_file:
+with open("GA/fitness.json", "w") as fitness_file:
     json.dump(fitness_output, fitness_file, indent=4)
