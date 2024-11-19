@@ -62,7 +62,7 @@ if __name__ == "__main__":
             'Hostler': random.choice([True, False])
         }
         for i in range(1, num_students + 1)
-    ]  # Example with 10 students
+    ]
     cgpa_threshold = scorer.calculate_dynamic_cgpa_threshold(students, top_percentage=30)
     print(f"Dynamic CGPA Threshold (Top 30%): {cgpa_threshold}")
 
