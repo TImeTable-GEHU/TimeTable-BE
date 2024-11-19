@@ -1,8 +1,9 @@
 import random
-import heapq
 
-from constants.TimeIntervals import TimeIntervalConstant
-
+class TimeIntervalConstant:
+    @staticmethod
+    def get_all_time_slots():
+        return ["9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00", "4:00-5:00"]
 
 class Timetable:
     def __init__(self):
@@ -27,7 +28,7 @@ class Timetable:
         day_schedule = {}
         time_slot_classroom_usage = {time_slot: set() for time_slot in self.time_slots}
         time_slot_teacher_usage = {time_slot: set() for time_slot in self.time_slots}
-
+        
         for section in self.sections:
             section_schedule = []
             for time_slot in self.time_slots:
@@ -74,10 +75,7 @@ class Timetable:
 
     def calculate_fitness(self, chromosome):
         overall_fitness_score = 0
-        section_fitness_scores = {}
-
         for day, day_schedule in chromosome.items():
-            section_fitness_scores[day] = {}
             for section, section_schedule in day_schedule.items():
                 section_score = 100
                 teacher_time_slots = {}
@@ -94,12 +92,12 @@ class Timetable:
                         continue
 
                     if (teacher, time_slot) in teacher_time_slots:
-                        section_score -= 30  # Penalize for teacher clash
+                        section_score -= 30
                     else:
                         teacher_time_slots[(teacher, time_slot)] = section
 
                     if (classroom, time_slot) in classroom_time_slots:
-                        section_score -= 20  # Penalize for classroom clash
+                        section_score -= 20
                     else:
                         classroom_time_slots[(classroom, time_slot)] = section
 
@@ -116,79 +114,63 @@ class Timetable:
 
                     for i in range(1, len(slots)):
                         if "Break" not in slots[i - 1] and "Break" not in slots[i]:
-                            section_score -= 10  # Penalize if no gaps
+                            section_score -= 10
 
-                section_fitness_scores[day][section] = max(section_score, 0)
                 overall_fitness_score += max(section_score, 0)
 
         return overall_fitness_score
 
-    def select_custom_parents(self, chromosomes, top_percentage=0.20, random_percentage=0.10):
+    def select_top_chromosomes(self, population: list, percentage=0.30) -> list:
         """
-        Select chromosomes using a combination of the top percentage and some random but good chromosomes for diversity.
-        - Select top `top_percentage` of chromosomes based on fitness.
-        - Randomly select `random_percentage` of chromosomes using roulette wheel selection for diversity.
+        Selects the top chromosomes based on their fitness scores from the population.
+        
+        :param population: List of chromosomes (each chromosome is a dictionary representing a timetable).
+        :param percentage: The proportion of chromosomes to select (default is 30%).
+        :return: A list of selected chromosomes.
         """
-        # Calculate fitness scores for each chromosome
-        fitness_scores = [(chromosome, self.calculate_fitness(chromosome)) for chromosome in chromosomes]
-
-        # Use heapq.nlargest to efficiently get the top chromosomes based on fitness
-        top_count = max(1, int(len(chromosomes) * top_percentage))  # Ensure at least 1 is selected
-        top_chromosomes = [chromosome for chromosome, _ in heapq.nlargest(top_count, fitness_scores, key=lambda x: x[1])]
-
-        # Roulette Wheel Selection for the random but good chromosomes (next 10%)
-        remaining_chromosomes = [chromosome for chromosome, _ in fitness_scores if chromosome not in top_chromosomes]
-
-        # Calculate total fitness score of the remaining chromosomes
-        total_fitness = sum(fitness for _, fitness in fitness_scores if _ not in top_chromosomes)
-
-        # Calculate the probability for each chromosome in the remaining list
-        probabilities = [fitness / total_fitness for _, fitness in fitness_scores if _ not in top_chromosomes]
-
-        # Select chromosomes using the roulette wheel method
-        random_good_count = max(1, int(len(chromosomes) * random_percentage))  # Ensure at least 1 is selected
-        random_good_chromosomes = random.choices(remaining_chromosomes, weights=probabilities, k=random_good_count)
-
-        # Combine top and random good chromosomes
-        selected_chromosomes = top_chromosomes + random_good_chromosomes
+        num_to_select = int(len(population) * percentage)
+        fitness_scores = [(chromosome, self.calculate_fitness(chromosome)) for chromosome in population]
+        sorted_chromosomes = sorted(fitness_scores, key=lambda x: x[1], reverse=True)
+        
+        best_num = int(num_to_select * 0.20)
+        worst_num = int(num_to_select * 0.10)
+        middle_num = num_to_select - (best_num + worst_num)
+        
+        best_chromosomes = sorted_chromosomes[:best_num]
+        worst_chromosomes = sorted_chromosomes[-worst_num:]
+        middle_chromosomes = sorted_chromosomes[best_num:best_num + middle_num]
+        
+        roulette_num = int(middle_num * 0.70)
+        rank_num = middle_num - roulette_num
+        
+        total_fitness = sum(fitness for _, fitness in middle_chromosomes)
+        roulette_chromosomes = random.choices(middle_chromosomes, weights=[fitness / total_fitness for _, fitness in middle_chromosomes], k=roulette_num)
+        
+        total_rank = sum(range(1, len(middle_chromosomes) + 1))
+        rank_probabilities = [i / total_rank for i in range(1, len(middle_chromosomes) + 1)]
+        rank_chromosomes = random.choices(middle_chromosomes, weights=rank_probabilities, k=rank_num)
+        
+        selected_chromosomes = [chromosome for chromosome, _ in best_chromosomes]
+        selected_chromosomes += [chromosome for chromosome, _ in worst_chromosomes]
+        selected_chromosomes += [chromosome for chromosome, _ in roulette_chromosomes]
+        selected_chromosomes += [chromosome for chromosome, _ in rank_chromosomes]
+        
+        # Output the breakdown
+        print(f"Total Number of Chromosomes: {len(population)}")
+        print(f"30% of Total Chromosomes: {num_to_select}")
+        print(f"Number of Best Chromosomes: {best_num}")
+        print(f"Number of Worst Chromosomes: {worst_num}")
+        print(f"Number of Chromosomes for Roulette: {roulette_num}")
+        print(f"Number of Chromosomes for Rank: {rank_num}")
+        
         return selected_chromosomes
 
-
-# Instantiate the Timetable class and generate multiple chromosomes
+# Example usage
 timetable_obj = Timetable()
-num_chromosomes = 10  # Specify the number of chromosomes you want to generate
+num_chromosomes = 1000
 chromosomes = timetable_obj.create_multiple_timelines(num_chromosomes)
+selected_chromosomes = timetable_obj.select_top_chromosomes(chromosomes, percentage=0.30)
 
-# Calculate fitness for all chromosomes
-fitness_scores = [timetable_obj.calculate_fitness(chromosome) for chromosome in chromosomes]
-
-# Select chromosomes using the custom selection method (top 20% + random 10%)
-selected_chromosomes = timetable_obj.select_custom_parents(chromosomes, top_percentage=0.20, random_percentage=0.10)
-
-# Display total number of chromosomes and number of selected chromosomes
-print(f"\nTotal Number of Chromosomes: {num_chromosomes}")
-print(f"Number of Selected Chromosomes (Top 20% + Random 10%): {len(selected_chromosomes)}")
-
-# Display fitness scores in a table
-print("\n=== Overall Fitness of All Chromosomes ===")
-print(f"{'Chromosome':<15} {'Fitness Score'}")
-print("-" * 30)  # Separator
-for i, score in enumerate(fitness_scores):
-    selected_marker = "*" if chromosomes[i] in selected_chromosomes else " "
-    print(f"{f'Chromosome {i + 1}':<15} {score} {selected_marker}")
-
-# Display selected chromosomes and their details
-print("\n=== Selected Chromosomes: Top 20% + Random 10% ===")
-for i, chromosome in enumerate(selected_chromosomes):
-    fitness = timetable_obj.calculate_fitness(chromosome)
-    print(f"\n--- Selected Chromosome {i + 1} ---")
-    print(f"Overall Fitness Score: {fitness}")
-    for day, day_schedule in chromosome.items():
-        print(f"\n--- {day} ---")
-        print(f"{'Time Slot':<25} {'Teacher':<10} {'Subject':<10} {'Classroom'}")
-        print("-" * 60)  # Separator
-        for section, schedule in day_schedule.items():
-            print(f"Section {section}:")
-            for item in schedule:
-                print(f"  {item['time_slot']:<25} {item['teacher_id']:<10} {item['subject_id']:<10} {item['classroom_id']}")
-            print()  # Extra space after each section
+# Output selected chromosomes
+for chromosome in selected_chromosomes[:5]:  # Displaying the first 5 selected chromosomes
+    print(chromosome)
