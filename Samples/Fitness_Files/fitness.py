@@ -1,7 +1,7 @@
 import random
 import json
-from constants.TimeIntervals import TimeIntervalConstant
-from constants.constant import WorkingDays
+from Constants.time_intervals import TimeIntervalConstant
+from Constants.constant import WorkingDays
 
 class TimetableFitness:
     def __init__(self):
