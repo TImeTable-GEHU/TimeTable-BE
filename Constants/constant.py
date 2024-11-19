@@ -94,3 +94,17 @@ class PenaltyConstants:
     PENALTY_OVER_CAPACITY = 25
     PENALTY_UN_PREFERRED_SLOT = 5
     PENALTY_OVERLOAD_TEACHER = 10
+
+
+class SectionsConstants:
+    # Define attribute weights and conditions
+    ATTRIBUTE_WEIGHTS = {
+        'good_cgpa': 1,         # 2^0
+        'hostler': 2,           # 2^1
+        # Additional attributes can be added here
+    }
+
+    ATTRIBUTE_CONDITIONS = {
+        'hostler': lambda student: student['Hostler'],
+        # Additional conditions can be added here
+    }
