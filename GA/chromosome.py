@@ -33,7 +33,7 @@ class TimetableGeneration:
             for i, section in enumerate(self.sections)
         }
 
-    def generate_day_schedule(self, day, half_day_sections, week_number):
+    def generate_day_schedule(self, day, half_day_sections):
         """
         Generate a schedule for a specific day.
         """
