@@ -8,15 +8,9 @@ from Constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
-    TeacherPreferences  
+    TeacherPreferences, PenaltyConstants
 )
 
-# Penalty Constants
-PENALTY_TEACHER_DOUBLE_BOOKED = 30
-PENALTY_CLASSROOM_DOUBLE_BOOKED = 20
-PENALTY_OVER_CAPACITY = 25
-PENALTY_UNPREFERRED_SLOT = 5
-PENALTY_OVERLOAD_TEACHER = 10
 
 class TimetableFitnessCalculator:
     def __init__(self, timetable):
@@ -69,13 +63,13 @@ class TimetableFitnessCalculator:
 
                         # Penalize if the teacher is assigned multiple sections at the same time
                         if (teacher, time_slot) in teacher_time_slots:
-                            section_score -= PENALTY_TEACHER_DOUBLE_BOOKED
+                            section_score -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
                         else:
                             teacher_time_slots[(teacher, time_slot)] = section
 
                         # Penalize if the classroom is assigned multiple sections at the same time
                         if (classroom, time_slot) in classroom_time_slots:
-                            section_score -= PENALTY_CLASSROOM_DOUBLE_BOOKED
+                            section_score -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
                         else:
                             classroom_time_slots[(classroom, time_slot)] = section
 
@@ -86,17 +80,17 @@ class TimetableFitnessCalculator:
 
                         # Penalize if the section strength exceeds the classroom capacity
                         if strength > self.room_capacity.get(classroom, 0):
-                            section_score -= PENALTY_OVER_CAPACITY
+                            section_score -= PenaltyConstants.PENALTY_OVER_CAPACITY
 
                         # Penalize if the teacher is assigned to a time slot they don't prefer
                         preferred_slots = self.teacher_preferences.get(teacher, [])
                         if time_slot not in preferred_slots:
-                            section_score -= PENALTY_UNPREFERRED_SLOT
+                            section_score -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
 
                     # Penalize if the teacher exceeds their work load
                     for teacher, time_slots in teacher_load.items():
                         if len(time_slots) > self.teacher_work_load.get(teacher, 5):
-                            section_score -= PENALTY_OVERLOAD_TEACHER
+                            section_score -= PenaltyConstants.PENALTY_OVERLOAD_TEACHER
 
                     section_fitness_scores[f"Week {week_count} - {day}"][section] = section_score
                     daily_fitness_score += section_score
@@ -108,6 +102,7 @@ class TimetableFitnessCalculator:
             week_count += 1
 
         return total_fitness_score, section_fitness_scores, weekly_fitness_scores
+
 
 # Main Execution
 # Generate timetable (chromosome) using TimetableGeneration

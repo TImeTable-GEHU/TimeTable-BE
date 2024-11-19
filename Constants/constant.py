@@ -3,7 +3,11 @@ class WorkingDays:
 
 
 class Sections:
-    sections = ["A", "B", "C", "D"]
+    sections = []
+
+    def __init__(self, section_number):
+        self.sections = [chr(65 + i) for i in range(section_number)]
+
 
 class SubjectTeacherMap:
     subject_teacher_map = {
@@ -78,6 +82,15 @@ class TeacherPreferences:
         "AK26": [5],
     }
 
+
 class SpecialSubjects:
     special_subjects = ["Placement_Class"]
     Labs=["PCS-506", "PCS-503", "PMA-502"]
+
+
+class PenaltyConstants:
+    PENALTY_TEACHER_DOUBLE_BOOKED = 30
+    PENALTY_CLASSROOM_DOUBLE_BOOKED = 20
+    PENALTY_OVER_CAPACITY = 25
+    PENALTY_UN_PREFERRED_SLOT = 5
+    PENALTY_OVERLOAD_TEACHER = 10
