@@ -75,8 +75,9 @@ class TeacherPreferences:
         "AK23": [1, 2, 3, 4, 5, 6, 7],
         "AP24": [1, 2, 3, 4, 5, 6, 7],
         "VD25": [1, 2, 3, 4, 5, 6, 7],
-        "AK26": [1, 2, 3, 4, 5, 6, 7],
+        "AK26": [5],
     }
 
 class SpecialSubjects:
-    special_subjects = ["Placement_Class", "PCS", "PMA"]
+    special_subjects = ["Placement_Class"]
+    Labs=["PCS-506", "PCS-503", "PMA-502"]
