@@ -2,7 +2,7 @@ import json
 import random
 
 class Selection:
-    def __init__(self):
+    def _init_(self):
         pass
 
     def read_weekly_fitness_from_json(self, file_path):
@@ -24,7 +24,7 @@ class Selection:
 
     def roulette_wheel_selection(self, remaining_scores, num_select):
         """
-        Selects `num_select` items from the remaining scores using roulette wheel selection.
+        Selects num_select items from the remaining scores using roulette wheel selection.
         """
         if not remaining_scores:
             print("Remaining scores are empty. Cannot perform roulette selection.")
@@ -90,7 +90,7 @@ class Selection:
 
 
 # Main Execution
-if __name__ == "__main__":
+if _name_ == "_main_":
     selector = Selection()
 
     # Read weekly fitness data from the provided JSON file path
