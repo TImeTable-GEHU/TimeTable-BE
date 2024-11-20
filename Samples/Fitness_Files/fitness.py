@@ -1,7 +1,8 @@
 import random
 import json
 from Constants.time_intervals import TimeIntervalConstant
-from Constants.constant import WorkingDays, Sections, SubjectTeacherMap, Classrooms, RoomCapacity
+from Constants.constant import WorkingDays, Sections, Classrooms, RoomCapacity
+from Samples.samples import SubjectTeacherMap
 
 
 class TimetableFitness:

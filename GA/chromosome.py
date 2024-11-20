@@ -3,7 +3,6 @@ from Constants.time_intervals import TimeIntervalConstant
 from Constants.constant import (
     WorkingDays,
     Sections,
-    SubjectTeacherMap,
     Classrooms,
     RoomCapacity,
     SubjectQuota,
@@ -13,13 +12,13 @@ from Constants.constant import (
 
 
 class TimetableGeneration:
-    def __init__(self):
+    def __init__(self, teacher_subject_mapping: dict):
         self.days = WorkingDays.days
         self.sections = Sections.sections
-        self.subject_teacher_map = SubjectTeacherMap.subject_teacher_map
+        self.subject_teacher_map = teacher_subject_mapping
         self.classrooms = Classrooms.classrooms
-        self.lab_subjects = SpecialSubjects.Labs  # Updated variable name to refer to lab subjects
-        self.lab_rooms = Classrooms.labs  # Correctly refers to lab rooms
+        self.lab_subjects = SpecialSubjects.Labs
+        self.lab_rooms = Classrooms.labs
         self.room_capacity = RoomCapacity.room_capacity
         self.section_strength = RoomCapacity.section_strength
         self.subject_quota = SubjectQuota.subject_quota
@@ -35,8 +34,9 @@ class TimetableGeneration:
 
     def generate_day_schedule(self, half_day_sections):
         """
-        Generate a schedule for a specific day.
+            Generate a schedule for a specific day.
         """
+
         day_schedule = {}
         subject_teacher_usage = {subject: iter(teachers) for subject, teachers in self.subject_teacher_map.items()}
 

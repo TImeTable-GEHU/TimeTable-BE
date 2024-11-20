@@ -4,12 +4,12 @@ from GA.chromosome import TimetableGeneration  # Import from GA package
 from Constants.constant import (
     WorkingDays,
     Sections,
-    SubjectTeacherMap,
     Classrooms,
     RoomCapacity,
     SubjectQuota,
     TeacherPreferences, PenaltyConstants
 )
+from Samples.samples import SubjectTeacherMap
 
 
 class TimetableFitnessCalculator:
@@ -106,7 +106,7 @@ class TimetableFitnessCalculator:
 
 # Main Execution
 # Generate timetable (chromosome) using TimetableGeneration
-timetable_generator = TimetableGeneration()
+timetable_generator = TimetableGeneration(SubjectTeacherMap.subject_teacher_map)
 timetable = timetable_generator.create_timetable(5)  # Generate a timetable with 2 weeks
 
 # Now using the new class for fitness calculation
