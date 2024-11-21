@@ -90,11 +90,11 @@ class Selection:
 
 
 # Main Execution
-if _name_ == "_main_":
+if __name__ == "_main_":
     selector = Selection()
 
     # Read weekly fitness data from the provided JSON file path
-    weekly_scores = selector.read_weekly_fitness_from_json("GA/Fitness.json")
+    weekly_scores = selector.read_weekly_fitness_from_json("GA/fitness.json")
 
     # Select top weeks based on the fitness scores if data is valid
     if weekly_scores:
