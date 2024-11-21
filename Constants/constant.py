@@ -15,9 +15,9 @@ class Classrooms:
     classrooms=0
     labs=0
     def __init__(self, room_count, lab_count):
-        # Generate classrooms dynamically: R1, R2, ...
+       
         self.classrooms = [f"R{i + 1}" for i in range(room_count)]
-        # Generate labs dynamically: L1, L2, ...
+       
         self.labs = [f"L{i + 1}" for i in range(lab_count)]
 
 class RoomCapacity:
@@ -25,12 +25,41 @@ class RoomCapacity:
     section_strength = 0
 
     def __init__(self, classrooms, sections, default_capacity=Defaults.room_capacity):
-        # Initialize capacities for each classroom
+       
         self.room_capacity = {room: default_capacity for room in classrooms}
-        # Initialize section strengths for each section
+       
         self.section_strength = {section: default_capacity for section in sections}
 
-
+class TeacherWorkLoad:
+    Weekly_workLoad={
+        "AB01": 5, 
+        "PK02": 5, 
+        "SS03": 5, 
+        "AA04": 5,
+        "AC05": 5,
+        "SP06": 5, 
+        "DP07": 5, 
+        "AD08": 5, 
+        "RD09": 5,
+        "BJ10": 5,
+        "RS11": 5,
+        "JM12": 5,
+        "NJ13": 5,
+        "PM14": 5, 
+        "AA15": 5,
+        "SJ16": 5,
+        "AB17": 5,
+        "HP18": 5, 
+        "SG19": 5,
+        "DT20": 5,
+        "PA21": 5, 
+        "NB22": 5,
+        "AK23": 5, 
+        "AP24": 5, 
+        "VD25": 5, 
+        "AK26": 5
+        }
+    
 class SubjectQuota:
     subject_quota = {
         "TCS-531": 3,
@@ -86,7 +115,7 @@ class TeacherPreferences:
 class SpecialSubjects:
     special_subjects = ["Placement_Class"]
     Labs=["PCS-506", "PCS-503", "PMA-502","PCS-512"]
-    specialization_subjects=["TCS-511","TCS-592","TCS-512","TCS-519","PCS-512"]
+    # specialization_subjects=["TCS-511","TCS-592","TCS-512","TCS-519","PCS-512"]
 
 
 class PenaltyConstants:
