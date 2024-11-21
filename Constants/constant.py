@@ -10,13 +10,22 @@ class Sections:
 
 
 class Classrooms:
-    classrooms = ["R1", "R2", "R3", "R4", "R5"]
-    labs = ["L1", "L2", "L3", "L4", "L5"]
-
+    classrooms=0
+    labs=0
+    def __init__(self, room_count, lab_count):
+        # Generate classrooms dynamically: R1, R2, ...
+        self.classrooms = [f"R{i + 1}" for i in range(room_count)]
+        # Generate labs dynamically: L1, L2, ...
+        self.labs = [f"L{i + 1}" for i in range(lab_count)]
 
 class RoomCapacity:
-    room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
-    section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
+    room_capacity = 0
+    section_strength = 0
+    def __init__(self, classrooms, sections, default_capacity=200):
+        # Initialize capacities for each classroom
+        self.room_capacity = {room: default_capacity for room in classrooms}
+        # Initialize section strengths for each section
+        self.section_strength = {section: default_capacity for section in sections}
 
 
 class SubjectQuota:
@@ -32,6 +41,11 @@ class SubjectQuota:
         "CSP-501": 1,
         "SCS-501": 1,
         "PCS-503": 1,
+        "TCS-511":2,
+        "TCS-592":2,
+        "TCS-512":2,
+        "TCS-519":2,
+        "PCS-512":1,
         "Placement_Class": 1,
     }
     
@@ -68,7 +82,8 @@ class TeacherPreferences:
 
 class SpecialSubjects:
     special_subjects = ["Placement_Class"]
-    Labs=["PCS-506", "PCS-503", "PMA-502"]
+    Labs=["PCS-506", "PCS-503", "PMA-502","PCS-512"]
+    specialization_subjects=["TCS-511","TCS-592","TCS-512","TCS-519","PCS-512"]
 
 
 class PenaltyConstants:
@@ -77,3 +92,67 @@ class PenaltyConstants:
     PENALTY_OVER_CAPACITY = 25
     PENALTY_UN_PREFERRED_SLOT = 5
     PENALTY_OVERLOAD_TEACHER = 10
+
+"""import requests
+
+class DynamicConstants:
+    def __init__(self, backend_url):
+        self.backend_url = backend_url
+
+    def fetch_data(self, endpoint):
+        try:
+            response = requests.get(f"{self.backend_url}/{endpoint}")
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Error fetching data from {endpoint}: {e}")
+            return {}
+
+class WorkingDays(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.days = self.fetch_data("working_days")  # Example: ["Monday", "Tuesday", ...]
+
+class Sections(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.sections = self.fetch_data("sections")  # Example: ["A", "B", "C", ...]
+
+class Classrooms(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.classrooms = self.fetch_data("classrooms")  # Example: ["R1", "R2", ...]
+        self.labs = self.fetch_data("labs")  # Example: ["L1", "L2", ...]
+
+class RoomCapacity(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.room_capacity = self.fetch_data("room_capacity")  # Example: {"R1": 200, "R2": 230, ...}
+        self.section_strength = self.fetch_data("section_strength")  # Example: {"A": 200, "B": 200, ...}
+
+class SubjectQuota(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.subject_quota = self.fetch_data("subject_quota")  # Example: {"TCS-531": 3, "TCS-502": 3, ...}
+
+class TeacherPreferences(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.teacher_preferences = self.fetch_data("teacher_preferences")  # Example: {"AB01": [1], ...}
+
+class SpecialSubjects(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.special_subjects = self.fetch_data("special_subjects")  # Example: ["Placement_Class", ...]
+        self.labs = self.fetch_data("labs")  # Example: ["PCS-506", "PCS-503", ...]
+
+class PenaltyConstants(DynamicConstants):
+    def __init__(self, backend_url):
+        super().__init__(backend_url)
+        self.constants = self.fetch_data("penalty_constants")  # Example: {"PENALTY_TEACHER_DOUBLE_BOOKED": 30, ...}
+        self.PENALTY_TEACHER_DOUBLE_BOOKED = self.constants.get("PENALTY_TEACHER_DOUBLE_BOOKED", 30)
+        self.PENALTY_CLASSROOM_DOUBLE_BOOKED = self.constants.get("PENALTY_CLASSROOM_DOUBLE_BOOKED", 20)
+        self.PENALTY_OVER_CAPACITY = self.constants.get("PENALTY_OVER_CAPACITY", 25)
+        self.PENALTY_UN_PREFERRED_SLOT = self.constants.get("PENALTY_UN_PREFERRED_SLOT", 5)
+        self.PENALTY_OVERLOAD_TEACHER = self.constants.get("PENALTY_OVERLOAD_TEACHER", 10)
+"""
