@@ -1,6 +1,8 @@
 class WorkingDays:
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
+class Defaults:
+    room_capacity = 60
 
 class Sections:
     sections = []
@@ -21,7 +23,8 @@ class Classrooms:
 class RoomCapacity:
     room_capacity = 0
     section_strength = 0
-    def __init__(self, classrooms, sections, default_capacity=200):
+
+    def __init__(self, classrooms, sections, default_capacity=Defaults.room_capacity):
         # Initialize capacities for each classroom
         self.room_capacity = {room: default_capacity for room in classrooms}
         # Initialize section strengths for each section

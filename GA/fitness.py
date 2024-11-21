@@ -57,7 +57,7 @@ class TimetableFitnessEvaluator:
                         assigned_classroom = schedule_item['classroom_id']
                         assigned_time_slot = schedule_item['time_slot']
                         assigned_subject = schedule_item['subject_id']
-                        section_strength = self.section_student_strength[]
+                        section_strength = self.section_student_strength
 
                         if "Break" in assigned_time_slot:
                             continue
