@@ -31,34 +31,9 @@ class RoomCapacity:
         self.section_strength = {section: default_capacity for section in sections}
 
 class TeacherWorkLoad:
-    Weekly_workLoad={
-        "AB01": 5, 
-        "PK02": 5, 
-        "SS03": 5, 
-        "AA04": 5,
-        "AC05": 5,
-        "SP06": 5, 
-        "DP07": 5, 
-        "AD08": 5, 
-        "RD09": 5,
-        "BJ10": 5,
-        "RS11": 5,
-        "JM12": 5,
-        "NJ13": 5,
-        "PM14": 5, 
-        "AA15": 5,
-        "SJ16": 5,
-        "AB17": 5,
-        "HP18": 5, 
-        "SG19": 5,
-        "DT20": 5,
-        "PA21": 5, 
-        "NB22": 5,
-        "AK23": 5, 
-        "AP24": 5, 
-        "VD25": 5, 
-        "AK26": 5
-        }
+    weekly_workload = dict()
+    def __init__(self, weekly_workload):
+        self.weekly_workload = weekly_workload
     
 class SubjectQuota:
     subject_quota = {
@@ -79,36 +54,6 @@ class SubjectQuota:
         "TCS-519":2,
         "PCS-512":1,
         "Placement_Class": 1,
-    }
-    
-class TeacherPreferences:
-    teacher_preferences = {
-        "AB01": [1],
-        "PK02": [1, 2, 3, 4, 5, 6, 7],
-        "SS03": [1, 2, 3, 4, 5, 6, 7],
-        "AA04": [1, 2, 3, 4, 5, 6, 7],
-        "AC05": [1, 2, 3, 4, 5, 6, 7],
-        "SP06": [1, 2, 3, 4, 5, 6, 7],
-        "DP07": [1, 2, 3, 4, 5, 6, 7],
-        "AD08": [1, 2, 3, 4, 5, 6, 7],
-        "RD09": [1, 2, 3, 4, 5, 6, 7],
-        "BJ10": [1, 2, 3, 4, 5, 6, 7],
-        "RS11": [1, 2, 3, 4, 5, 6, 7],
-        "JM12": [1, 2, 3, 4, 5, 6, 7],
-        "NJ13": [1, 2, 3, 4, 5, 6, 7],
-        "PM14": [1, 2, 3, 4, 5, 6, 7],
-        "AA15": [1, 2, 3, 4, 5, 6, 7],
-        "SJ16": [1, 2, 3, 4, 5, 6, 7],
-        "AB17": [1, 2, 3, 4, 5, 6, 7],
-        "HP18": [1, 2, 3, 4, 5, 6, 7],
-        "SG19": [1, 2, 3, 4, 5, 6, 7],
-        "DT20": [1, 2, 3, 4, 5, 6, 7],
-        "PA21": [1, 2, 3, 4, 5, 6, 7],
-        "NB22": [1, 2, 3, 4, 5, 6, 7],
-        "AK23": [1, 2, 3, 4, 5, 6, 7],
-        "AP24": [1, 2, 3, 4, 5, 6, 7],
-        "VD25": [1, 2, 3, 4, 5, 6, 7],
-        "AK26": [5],
     }
 
 

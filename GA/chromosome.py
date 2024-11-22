@@ -6,9 +6,10 @@ from Constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
-    TeacherPreferences,
     SpecialSubjects
 )
+from Samples.samples import TeacherWorkload
+
 
 class TimetableGeneration:
     def __init__(self, teacher_subject_mapping: dict, total_sections: int, total_classrooms: int, total_labs: int):
@@ -27,7 +28,7 @@ class TimetableGeneration:
         self.subject_quota_limits = SubjectQuota.subject_quota
         self.lab_subject_list = SpecialSubjects.Labs
         self.special_subject_list = SpecialSubjects.special_subjects
-        self.teacher_availability_preferences = TeacherPreferences.teacher_preferences
+        self.teacher_availability_preferences = TeacherWorkload.teacher_preferences
         self.available_time_slots = TimeIntervalConstant.time_slots
         self.section_to_classroom_map = {
             section: self.classrooms[i % len(self.classrooms)]

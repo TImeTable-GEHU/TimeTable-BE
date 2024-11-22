@@ -1,4 +1,3 @@
-import random
 import json
 from GA.chromosome import TimetableGeneration
 from Constants.constant import (
@@ -7,7 +6,6 @@ from Constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
-    TeacherPreferences,
     PenaltyConstants,
     TeacherWorkLoad,
 )
@@ -25,8 +23,8 @@ class TimetableFitnessEvaluator:
         self.classroom_capacity = RoomCapacity.room_capacity
         self.section_student_strength = RoomCapacity.section_strength
         self.subject_quota_data = SubjectQuota.subject_quota
-        self.teacher_time_preferences = TeacherPreferences.teacher_preferences
-        self.teacher_daily_workload = TeacherWorkLoad.Weekly_workLoad
+        self.teacher_time_preferences = TeacherPreloads.teacher_preferences
+        self.teacher_daily_workload = TeacherWorkLoad.weekly_workload
 
     def evaluate_timetable_fitness(self):
         total_fitness = 0
