@@ -5,7 +5,7 @@ class Defaults:
     room_capacity = 60
 
 class Sections:
-    sections = ["A","B","C","D"]
+    sections = []
 
     def __init__(self, section_number):
         self.sections = [chr(65 + i) for i in range(section_number)]
@@ -29,6 +29,7 @@ class RoomCapacity:
         self.room_capacity = {room: default_capacity for room in classrooms}
        
         self.section_strength = {section: default_capacity for section in sections}
+
 
 class SubjectQuota:
     subject_quota = {
@@ -81,31 +82,31 @@ class TeacherPreloads:
         "AK26": [5],
     }
     weekly_workload={
-        "AB01": 5, 
-        "PK02": 5, 
-        "SS03": 5, 
+        "AB01": 5,
+        "PK02": 5,
+        "SS03": 5,
         "AA04": 5,
         "AC05": 5,
-        "SP06": 5, 
-        "DP07": 5, 
-        "AD08": 5, 
+        "SP06": 5,
+        "DP07": 5,
+        "AD08": 5,
         "RD09": 5,
         "BJ10": 5,
         "RS11": 5,
         "JM12": 5,
         "NJ13": 5,
-        "PM14": 5, 
+        "PM14": 5,
         "AA15": 5,
         "SJ16": 5,
         "AB17": 5,
-        "HP18": 5, 
+        "HP18": 5,
         "SG19": 5,
         "DT20": 5,
-        "PA21": 5, 
+        "PA21": 5,
         "NB22": 5,
-        "AK23": 5, 
-        "AP24": 5, 
-        "VD25": 5, 
+        "AK23": 5,
+        "AP24": 5,
+        "VD25": 5,
         "AK26": 5
         }
 
