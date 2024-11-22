@@ -1,13 +1,13 @@
 import random
 import json
 from Constants.time_intervals import TimeIntervalConstant
-from Constants.constant import WorkingDays, Sections, Classrooms, RoomCapacity
+from Constants.constant import Sections, Classrooms, RoomCapacity, Defaults
 from Samples.samples import SubjectTeacherMap
 
 
 class TimetableFitness:
     def __init__(self, sections):
-        self.days = WorkingDays.days
+        self.days = Defaults.working_days
         self.sections = sections
         self.time_slots = TimeIntervalConstant.time_slots
 

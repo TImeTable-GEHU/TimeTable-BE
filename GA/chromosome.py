@@ -1,13 +1,14 @@
 import random
 from Constants.time_intervals import TimeIntervalConstant
 from Constants.constant import (
-    WorkingDays,
     Sections,
     Classrooms,
     RoomCapacity,
     SubjectQuota,
     TeacherPreloads,
-    SpecialSubjects
+    SpecialSubjects,
+    SpecialSubjects,
+    Defaults
 )
 from Samples.samples import TeacherWorkload
 
@@ -24,7 +25,7 @@ class TimetableGeneration:
         self.lab_classrooms = self.classrooms_manager.labs
         self.room_capacity = self.room_capacity_manager.room_capacity
         self.section_strength = self.room_capacity_manager.section_strength
-        self.weekdays = WorkingDays.days
+        self.weekdays = Defaults.working_days
         self.subject_teacher_mapping = teacher_subject_mapping
         self.subject_quota_limits = SubjectQuota.subject_quota
         self.lab_subject_list = SpecialSubjects.Labs

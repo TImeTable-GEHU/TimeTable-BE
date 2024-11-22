@@ -1,8 +1,8 @@
-class WorkingDays:
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-
 class Defaults:
+    # All the defaults values over GA folder.
     room_capacity = 60
+    working_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
 
 class Sections:
     sections = []
@@ -12,13 +12,13 @@ class Sections:
 
 
 class Classrooms:
-    classrooms=0
-    labs=0
+    classrooms = 0
+    labs = 0
+
     def __init__(self, room_count, lab_count):
-       
         self.classrooms = [f"R{i + 1}" for i in range(room_count)]
-       
         self.labs = [f"L{i + 1}" for i in range(lab_count)]
+
 
 class RoomCapacity:
     room_capacity = 0
@@ -27,7 +27,6 @@ class RoomCapacity:
     def __init__(self, classrooms, sections, default_capacity=Defaults.room_capacity):
        
         self.room_capacity = {room: default_capacity for room in classrooms}
-       
         self.section_strength = {section: default_capacity for section in sections}
 
 
@@ -51,7 +50,7 @@ class SubjectQuota:
         "PCS-512":1,
         "Placement_Class": 1,
     }
-    
+
 class TeacherPreloads:
     teacher_preferences = {
         "AB01": [1],
