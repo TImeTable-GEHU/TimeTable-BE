@@ -34,16 +34,17 @@ class TeacherSubject(models.Model):
 
 
 class Room(models.Model):
-    class RoomType(models.TextChoices):
-        LECTURE_THEATRE = "Lecture Theatre", "Lecture Theatre"
-        CLASS_ROOM = "Class Room", "Class Room"
-        LAB = "Lab", "Lab"
-        SEMINAR_Hall = "Seminar Hall", "Seminar Hall"
-
     room_code = models.CharField(max_length=10)
     capacity = models.IntegerField()
     room_type = models.CharField(
-        max_length=20, choices=RoomType.choices, default=RoomType.CLASS_ROOM
+        max_length=20,
+        choices=(
+            ("Class Room", "Class Room"),
+            ("Lecture Theatre", "Lecture Theatre"),
+            ("Lab", "Lab"),
+            ("Seminar Hall", "Seminar Hall"),
+        ),
+        default="Class Room",
     )
 
     def __str__(self):
