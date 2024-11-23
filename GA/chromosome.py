@@ -36,6 +36,7 @@ class TimetableGeneration:
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
+        self.weekly_workload = TeacherWorkload.Weekly_workLoad
 
     def generate_daily_schedule(self, half_day_section_list):
         daily_schedule = {}

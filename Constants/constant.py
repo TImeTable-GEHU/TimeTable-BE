@@ -51,6 +51,7 @@ class SubjectQuota:
         "Placement_Class": 1,
     }
 
+
 class TeacherPreloads:
     teacher_preferences = {
         "AB01": [1],
@@ -80,6 +81,7 @@ class TeacherPreloads:
         "VD25": [1, 2, 3, 4, 5, 6, 7],
         "AK26": [5],
     }
+
     weekly_workload={
         "AB01": 5,
         "PK02": 5,

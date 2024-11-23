@@ -1,4 +1,5 @@
 import json
+
 from GA.chromosome import TimetableGeneration
 from Constants.constant import (
     Sections,
@@ -28,16 +29,18 @@ class TimetableFitnessEvaluator:
         teacher_daily_workload
     ):
         self.generated_timetable = generated_timetable
-        self.available_days = Defaults.working_days
-        self.all_sections = Sections.sections
-        self.subject_teacher_mapping = SubjectTeacherMap.subject_teacher_map
-        self.available_classrooms = Classrooms.classrooms
-        self.available_labs = Classrooms.labs
-        self.classroom_capacity = RoomCapacity.room_capacity
-        self.section_student_strength = RoomCapacity.section_strength
-        self.subject_quota_data = SubjectQuota.subject_quota
-        self.teacher_time_preferences = TeacherPreloads.teacher_preferences
-        self.teacher_daily_workload = TeacherPreloads.weekly_workload
+        self.available_days = available_days
+        self.all_sections = all_sections
+        self.subject_teacher_mapping = subject_teacher_mapping
+        self.available_classrooms = available_classrooms
+        self.available_labs = available_labs
+        self.classroom_capacity = classroom_capacity
+        self.section_student_strength = section_student_strength
+        self.subject_quota_data = subject_quota_data
+        self.teacher_time_preferences = teacher_time_preferences
+        self.teacher_daily_workload = teacher_daily_workload
+        print(self.all_sections, self.available_classrooms, self.available_labs)
+
 
     def evaluate_timetable_fitness(self):
         total_fitness = 0
@@ -69,7 +72,7 @@ class TimetableFitnessEvaluator:
                         assigned_classroom = schedule_item['classroom_id']
                         assigned_time_slot = schedule_item['time_slot']
                         assigned_subject = schedule_item['subject_id']
-                        section_strength = self.section_student_strength
+                        section_strength = self.section_student_strength[section]
 
                         if "Break" in assigned_time_slot:
                             continue
@@ -88,7 +91,7 @@ class TimetableFitnessEvaluator:
                             teacher_workload_tracking[assigned_teacher] = []
                         teacher_workload_tracking[assigned_teacher].append(assigned_time_slot)
 
-                        if section_strength > self.classroom_capacity:
+                        if section_strength > self.classroom_capacity[assigned_classroom]:
                             section_fitness -= PenaltyConstants.PENALTY_OVER_CAPACITY
 
                         preferred_time_slots = self.teacher_time_preferences[assigned_teacher]
@@ -122,16 +125,28 @@ if __name__ == "__main__":
         total_classrooms=total_classrooms,
         total_labs=total_labs
     )
-    generated_timetable = timetable_generator.create_timetable(5)
+    generated_timetables = timetable_generator.create_timetable(5)
 
-    print("Generated Timetable:")
-    print(json.dumps(generated_timetable, indent=4))
-
-    fitness_evaluator = TimetableFitnessEvaluator(generated_timetable, Defaults.working_days, Sections.sections, SubjectTeacherMap.subject_teacher_map, Classrooms.classrooms, Classrooms.labs, RoomCapacity.room_capacity, RoomCapacity.section_strength, SubjectQuota.subject_quota, TeacherPreloads.teacher_preferences, TeacherPreloads.weekly_workload)
+    # print("Generated Timetable:")
+    # print(json.dumps(generated_timetables, indent=4))
+    fitness_evaluator = TimetableFitnessEvaluator(
+        generated_timetables,
+        Defaults.working_days,
+        timetable_generator.sections,
+        SubjectTeacherMap.subject_teacher_map,
+        timetable_generator.classrooms,
+        timetable_generator.lab_classrooms,
+        timetable_generator.room_capacity,
+        timetable_generator.section_strength,
+        timetable_generator.subject_quota_limits,
+        timetable_generator.teacher_availability_preferences,
+        timetable_generator.weekly_workload
+    )
     overall_fitness, section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
-
+    from icecream import ic
+    ic(overall_fitness, section_fitness_data, weekly_fitness_data)
     with open("GA/chromosome.json", "w") as timetable_file:
-        json.dump(generated_timetable, timetable_file, indent=4)
+        json.dump(generated_timetables, timetable_file, indent=4)
 
     fitness_output_data = {
         "overall_fitness": overall_fitness,
