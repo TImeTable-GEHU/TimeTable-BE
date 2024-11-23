@@ -50,13 +50,16 @@ class Room(models.Model):
         return f"{self.room_code} ({self.room_type})"
 
 
-class Section(models.Model):
+class Student(models.Model):
     student_name = models.CharField(max_length=100)
+    student_id = models.CharField(max_length=15)
     is_hosteller = models.BooleanField(default=False)
     location = models.CharField(max_length=100)
-    cgpa = models.DecimalField(max_digits=4, decimal_places=2)
-    student_id = models.CharField(max_length=15)
+    dept = models.CharField(max_length=50)
+    course = models.CharField(max_length=100)
+    semester = models.IntegerField()
     section = models.CharField(max_length=2)
+    cgpa = models.DecimalField(max_digits=4, decimal_places=2)
 
     def __str__(self):
         return f"{self.student_name} ({self.student_id}) - Section {self.section}"
