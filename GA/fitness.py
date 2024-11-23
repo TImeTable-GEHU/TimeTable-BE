@@ -115,3 +115,48 @@ class TimetableFitnessEvaluator:
             current_week += 1
 
         return daily_section_fitness_scores, weekly_fitness_scores
+
+
+if __name__ == "__main__":
+    total_sections = 6
+    total_classrooms = 8
+    total_labs = 3
+
+    timetable_generator = TimeTableGeneration(
+        teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
+        total_sections=total_sections,
+        total_classrooms=total_classrooms,
+        total_labs=total_labs,
+    )
+    generated_timetables = timetable_generator.create_timetable(5)
+
+    fitness_evaluator = TimetableFitnessEvaluator(
+        generated_timetables,
+        timetable_generator.sections,
+        SubjectTeacherMap.subject_teacher_map,
+        timetable_generator.classrooms,
+        timetable_generator.lab_classrooms,
+        timetable_generator.room_capacity,
+        timetable_generator.section_strength,
+        timetable_generator.subject_quota_limits,
+        timetable_generator.teacher_availability_preferences,
+        timetable_generator.weekly_workload,
+        Defaults.working_days,
+    )
+
+    overall_fitness, section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
+
+    with open("GA/chromosome.json", "w") as timetable_file:
+        json.dump(generated_timetables, timetable_file, indent=4)
+
+    fitness_output_data = {
+        "overall_fitness": overall_fitness,
+        "section_fitness_scores": section_fitness_data,
+        "weekly_fitness_scores": weekly_fitness_data,
+    }
+
+    with open("GA/fitness.json", "w") as fitness_scores_file:
+        json.dump(fitness_output_data, fitness_scores_file, indent=4)
+
+    print(f"Overall Fitness: {overall_fitness}")
+    print("Timetable and fitness scores have been saved.")
