@@ -2,6 +2,8 @@ class Defaults:
     # All the defaults values over GA folder.
     room_capacity = 60
     working_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    starting_section_fitness = 100
+    max_class_capacity = 250
 
 
 class Sections:

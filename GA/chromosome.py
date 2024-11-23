@@ -1,4 +1,5 @@
 import random
+
 from Constants.time_intervals import TimeIntervalConstant
 from Constants.constant import (
     Sections,
@@ -7,13 +8,12 @@ from Constants.constant import (
     SubjectQuota,
     TeacherPreloads,
     SpecialSubjects,
-    SpecialSubjects,
     Defaults
 )
 from Samples.samples import TeacherWorkload
 
 
-class TimetableGeneration:
+class TimeTableGeneration:
     def __init__(self, teacher_subject_mapping: dict, total_sections: int, total_classrooms: int, total_labs: int):
         self.sections_manager = Sections(total_sections)
         self.classrooms_manager = Classrooms(total_classrooms, total_labs)
@@ -37,6 +37,7 @@ class TimetableGeneration:
             for i, section in enumerate(self.sections)
         }
         self.weekly_workload = TeacherWorkload.Weekly_workLoad
+
 
     def generate_daily_schedule(self, half_day_section_list):
         daily_schedule = {}
@@ -125,6 +126,7 @@ class TimetableGeneration:
             daily_schedule[section] = section_schedule
 
         return daily_schedule
+
 
     def create_timetable(self, total_weeks=5):
         complete_timetable = {}
