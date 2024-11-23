@@ -1,22 +1,74 @@
 import psycopg2
+from datetime import datetime
 import os
 
+
 class PostgresDriver:
-    def __init__(self):
-        self.connection = psycopg2.connect(
-            dbname=os.getenv("POSTGRES_NAME"),
-            user=os.getenv("POSTGRES_USER"),
-            password=os.getenv("POSTGRES_PASSWORD"),
-            host=os.getenv("POSTGRES_HOST"),
-            port=os.getenv("POSTGRES_PORT")
-        )
+    def __init__(
+        self,
+        dbname=None,
+        user=None,
+        host=None,
+        password=None,
+        port=None,
+        options=None,
+        logger=None,
+    ):
+        self.logger = logger
+
+        self.db_config = {
+            "dbname": dbname or os.getenv("POSTGRES_NAME"),
+            "user": user or os.getenv("POSTGRES_USER"),
+            "host": host or os.getenv("POSTGRES_HOST"),
+            "password": password or os.getenv("POSTGRES_PASSWORD"),
+            "port": port or os.getenv("POSTGRES_PORT"),
+            "options": options or "-c search_path=public",
+            "sslmode": "disable",
+        }
+
+        self.__client = None
+        self.__cursor = None
+        self._connect()
+
+        if logger:
+            self.logger.info(f"Postgres object initialized at {datetime.now()}")
+
+    def _connect(self):
+        try:
+            self.__client = psycopg2.connect(**self.db_config)
+            self.__client.autocommit = True
+            self.__cursor = self.__client.cursor()
+        except psycopg2.Error as ex:
+            if self.logger:
+                self.logger.error(f"Failed to connect to database: {ex}")
+            raise
+
+    def _get_cursor(self):
+        if not self.__client or self.__client.closed:
+            if self.logger:
+                self.logger.info("Reconnecting to database...")
+            self._connect()
+
+        if not self.__cursor or self.__cursor.closed:
+            self.__cursor = self.__client.cursor()
+
+        return self.__cursor
 
     def execute_query(self, query, params=None):
-        with self.connection.cursor() as cursor:
+        cursor = self._get_cursor()
+        try:
             cursor.execute(query, params)
-            if query.strip().lower().startswith("select"):
-                return cursor.fetchall()
-            self.connection.commit()
-
-    def close(self):
-        self.connection.close()
+            if cursor.description:  # SELECT query
+                results = cursor.fetchall()
+                if self.logger:
+                    self.logger.info(f"Query executed successfully: {query}")
+                return results
+            else:  # Non-SELECT query
+                if self.logger:
+                    self.logger.info(f"Query executed successfully: {query}")
+        except psycopg2.Error as ex:
+            if self.logger:
+                self.logger.error(f"Query failed: {query} with exception {ex}")
+            self.__client.close()
+            self.__cursor = None
+            raise
