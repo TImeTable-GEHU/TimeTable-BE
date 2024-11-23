@@ -2,9 +2,14 @@ import random
 from collections import defaultdict
 from Constants.constant import SectionsConstants
 
+
 class StudentScorer:
-    def __init__(self, attribute_weights=SectionsConstants.ATTRIBUTE_WEIGHTS):
+    def __init__(
+        self,
+        attribute_weights=SectionsConstants.ATTRIBUTE_WEIGHTS
+    ):
         self.attribute_weights = attribute_weights
+
 
     def calculate_dynamic_cgpa_threshold(self, students, top_percentage=30):
         """Calculate the CGPA threshold as the top X%."""
@@ -51,6 +56,7 @@ class StudentScorer:
                 sections.append(current_section)
 
             return sections
+
 
 if __name__ == "__main__":
     scorer = StudentScorer()
