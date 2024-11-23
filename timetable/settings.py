@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 from pathlib import Path
@@ -60,7 +59,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "timetable.wsgi.application"
 
-# Database settings
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -69,14 +67,6 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
         "HOST": os.getenv("POSTGRES_HOST"),
         "PORT": os.getenv("POSTGRES_PORT"),
-    },
-    "mongo": {
-        "ENGINE": "djongo",
-        "NAME": os.getenv("MONGO_DB_NAME"),
-        "CLIENT": {
-            "host": os.getenv("MONGO_HOST"),
-            "port": int(os.getenv("MONGO_PORT")),
-        },
     },
 }
 
