@@ -14,7 +14,13 @@ from Samples.samples import TeacherWorkload
 
 
 class TimeTableGeneration:
-    def __init__(self, teacher_subject_mapping: dict, total_sections: int, total_classrooms: int, total_labs: int):
+    def __init__(
+        self,
+        teacher_subject_mapping: dict,
+        total_sections: int,
+        total_classrooms: int,
+        total_labs: int
+    ):
         self.sections_manager = Sections(total_sections)
         self.classrooms_manager = Classrooms(total_classrooms, total_labs)
         self.room_capacity_manager = RoomCapacity(
