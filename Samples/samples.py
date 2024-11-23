@@ -55,8 +55,51 @@ class SubjectQuota:
         "PCS-503": 1,
         "Placement_Class": 1,
     }
-    
-class TeacherPreferences:
+
+
+class SpecialSubjects:
+    special_subjects = ["Placement_Class"]
+    Labs=["PCS-506", "PCS-503", "PMA-502"]
+
+
+class PenaltyConstants:
+    PENALTY_TEACHER_DOUBLE_BOOKED = 30
+    PENALTY_CLASSROOM_DOUBLE_BOOKED = 20
+    PENALTY_OVER_CAPACITY = 25
+    PENALTY_UN_PREFERRED_SLOT = 5
+    PENALTY_OVERLOAD_TEACHER = 10
+
+
+class TeacherWorkload:
+    Weekly_workLoad = {
+        "AB01": 5,
+        "PK02": 5,
+        "SS03": 5,
+        "AA04": 5,
+        "AC05": 5,
+        "SP06": 5,
+        "DP07": 5,
+        "AD08": 5,
+        "RD09": 5,
+        "BJ10": 5,
+        "RS11": 5,
+        "JM12": 5,
+        "NJ13": 5,
+        "PM14": 5,
+        "AA15": 5,
+        "SJ16": 5,
+        "AB17": 5,
+        "HP18": 5,
+        "SG19": 5,
+        "DT20": 5,
+        "PA21": 5,
+        "NB22": 5,
+        "AK23": 5,
+        "AP24": 5,
+        "VD25": 5,
+        "AK26": 5
+    }
+
     teacher_preferences = {
         "AB01": [1],
         "PK02": [1, 2, 3, 4, 5, 6, 7],
@@ -85,16 +128,3 @@ class TeacherPreferences:
         "VD25": [1, 2, 3, 4, 5, 6, 7],
         "AK26": [5],
     }
-
-
-class SpecialSubjects:
-    special_subjects = ["Placement_Class"]
-    Labs=["PCS-506", "PCS-503", "PMA-502"]
-
-
-class PenaltyConstants:
-    PENALTY_TEACHER_DOUBLE_BOOKED = 30
-    PENALTY_CLASSROOM_DOUBLE_BOOKED = 20
-    PENALTY_OVER_CAPACITY = 25
-    PENALTY_UN_PREFERRED_SLOT = 5
-    PENALTY_OVERLOAD_TEACHER = 10

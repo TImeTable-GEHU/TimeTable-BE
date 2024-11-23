@@ -24,7 +24,11 @@ class TimetableFitnessEvaluator:
         self.section_student_strength = RoomCapacity.section_strength
         self.subject_quota_data = SubjectQuota.subject_quota
         self.teacher_time_preferences = TeacherPreloads.teacher_preferences
+<<<<<<< HEAD
         self.teacher_daily_workload = TeacherPreloads.weekly_workload
+=======
+        self.teacher_daily_workload = TeacherWorkLoad.weekly_workload
+>>>>>>> 3cc3b2ef4622a16b02dc5828f592ad16e85ffda3
 
     def evaluate_timetable_fitness(self):
         total_fitness = 0

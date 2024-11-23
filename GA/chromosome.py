@@ -9,7 +9,6 @@ from Constants.constant import (
     TeacherPreloads,
     SpecialSubjects
 )
-
 class TimetableGeneration:
     def __init__(self, teacher_subject_mapping: dict, total_sections: int, total_classrooms: int, total_labs: int):
         self.sections_manager = Sections(total_sections)
