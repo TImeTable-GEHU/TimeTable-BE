@@ -38,7 +38,6 @@ class TimetableFitnessEvaluator:
 
 
     def evaluate_timetable_fitness(self):
-        total_fitness = 0  # todo: to remove this
         daily_section_fitness_scores = {}
         weekly_fitness_scores = {}
         current_week = 1
@@ -113,12 +112,11 @@ class TimetableFitnessEvaluator:
                     day_fitness += section_fitness
 
                 weekly_fitness += day_fitness
-                total_fitness += day_fitness
 
             weekly_fitness_scores[weekly_label] = weekly_fitness
             current_week += 1
 
-        return total_fitness, daily_section_fitness_scores, weekly_fitness_scores
+        return daily_section_fitness_scores, weekly_fitness_scores
 
 
 if __name__ == "__main__":
@@ -149,12 +147,12 @@ if __name__ == "__main__":
         timetable_generator.weekly_workload,
         Defaults.working_days
     )
-    overall_fitness, section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
+
+    section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
     with open("GA/chromosome.json", "w") as timetable_file:
         json.dump(generated_timetables, timetable_file, indent=4)
 
     fitness_output_data = {
-        "overall_fitness": overall_fitness,
         "section_fitness_scores": section_fitness_data,
         "weekly_fitness_scores": weekly_fitness_data
     }
@@ -162,5 +160,4 @@ if __name__ == "__main__":
     with open("GA/fitness.json", "w") as fitness_scores_file:
         json.dump(fitness_output_data, fitness_scores_file, indent=4)
 
-    print(f"Overall Fitness: {overall_fitness}")
     print("Timetable and fitness scores have been saved.")
