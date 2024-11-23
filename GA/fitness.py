@@ -1,4 +1,3 @@
-import random
 import json
 from GA.chromosome import TimetableGeneration
 from Constants.constant import (
@@ -7,26 +6,25 @@ from Constants.constant import (
     Classrooms,
     RoomCapacity,
     SubjectQuota,
-    TeacherPreferences,
     PenaltyConstants,
-    TeacherWorkLoad,
+    TeacherPreloads,
 )
 from Samples.samples import SubjectTeacherMap
 
 
 class TimetableFitnessEvaluator:
-    def __init__(self, generated_timetable, available_days, all_sections, subject_teacher_mapping, available_classrooms, available_labs, classroom_capacity, section_student_strength, subject_quota_data, teacher_time_preferences, teacher_daily_workload):
+    def __init__(self, generated_timetable):
         self.generated_timetable = generated_timetable
-        self.available_days = available_days
-        self.all_sections = all_sections
-        self.subject_teacher_mapping = subject_teacher_mapping
-        self.available_classrooms = available_classrooms
-        self.available_labs = available_labs
-        self.classroom_capacity = classroom_capacity
-        self.section_student_strength = section_student_strength
-        self.subject_quota_data = subject_quota_data
-        self.teacher_time_preferences = teacher_time_preferences
-        self.teacher_daily_workload = teacher_daily_workload
+        self.available_days = WorkingDays.days
+        self.all_sections = Sections.sections
+        self.subject_teacher_mapping = SubjectTeacherMap.subject_teacher_map
+        self.available_classrooms = Classrooms.classrooms
+        self.available_labs = Classrooms.labs
+        self.classroom_capacity = RoomCapacity.room_capacity
+        self.section_student_strength = RoomCapacity.section_strength
+        self.subject_quota_data = SubjectQuota.subject_quota
+        self.teacher_time_preferences = TeacherPreloads.teacher_preferences
+        self.teacher_daily_workload = TeacherPreloads.weekly_workload
 
     def evaluate_timetable_fitness(self):
         total_fitness = 0
@@ -116,7 +114,7 @@ if __name__ == "__main__":
     print("Generated Timetable:")
     print(json.dumps(generated_timetable, indent=4))
 
-    fitness_evaluator = TimetableFitnessEvaluator(generated_timetable, WorkingDays.days, Sections.sections, SubjectTeacherMap.subject_teacher_map, Classrooms.classrooms, Classrooms.labs, RoomCapacity.room_capacity, RoomCapacity.section_strength, SubjectQuota.subject_quota, TeacherPreferences.teacher_preferences, TeacherWorkLoad.Weekly_workLoad)
+    fitness_evaluator = TimetableFitnessEvaluator(generated_timetable)
     overall_fitness, section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
 
     with open("GA/chromosome.json", "w") as timetable_file:

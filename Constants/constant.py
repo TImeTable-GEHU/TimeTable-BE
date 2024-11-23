@@ -5,7 +5,7 @@ class Defaults:
     room_capacity = 60
 
 class Sections:
-    sections = []
+    sections = ["A","B","C","D"]
 
     def __init__(self, section_number):
         self.sections = [chr(65 + i) for i in range(section_number)]
@@ -30,36 +30,6 @@ class RoomCapacity:
        
         self.section_strength = {section: default_capacity for section in sections}
 
-class TeacherWorkLoad:
-    Weekly_workLoad={
-        "AB01": 5, 
-        "PK02": 5, 
-        "SS03": 5, 
-        "AA04": 5,
-        "AC05": 5,
-        "SP06": 5, 
-        "DP07": 5, 
-        "AD08": 5, 
-        "RD09": 5,
-        "BJ10": 5,
-        "RS11": 5,
-        "JM12": 5,
-        "NJ13": 5,
-        "PM14": 5, 
-        "AA15": 5,
-        "SJ16": 5,
-        "AB17": 5,
-        "HP18": 5, 
-        "SG19": 5,
-        "DT20": 5,
-        "PA21": 5, 
-        "NB22": 5,
-        "AK23": 5, 
-        "AP24": 5, 
-        "VD25": 5, 
-        "AK26": 5
-        }
-    
 class SubjectQuota:
     subject_quota = {
         "TCS-531": 3,
@@ -81,7 +51,7 @@ class SubjectQuota:
         "Placement_Class": 1,
     }
     
-class TeacherPreferences:
+class TeacherPreloads:
     teacher_preferences = {
         "AB01": [1],
         "PK02": [1, 2, 3, 4, 5, 6, 7],
@@ -110,6 +80,34 @@ class TeacherPreferences:
         "VD25": [1, 2, 3, 4, 5, 6, 7],
         "AK26": [5],
     }
+    weekly_workload={
+        "AB01": 5, 
+        "PK02": 5, 
+        "SS03": 5, 
+        "AA04": 5,
+        "AC05": 5,
+        "SP06": 5, 
+        "DP07": 5, 
+        "AD08": 5, 
+        "RD09": 5,
+        "BJ10": 5,
+        "RS11": 5,
+        "JM12": 5,
+        "NJ13": 5,
+        "PM14": 5, 
+        "AA15": 5,
+        "SJ16": 5,
+        "AB17": 5,
+        "HP18": 5, 
+        "SG19": 5,
+        "DT20": 5,
+        "PA21": 5, 
+        "NB22": 5,
+        "AK23": 5, 
+        "AP24": 5, 
+        "VD25": 5, 
+        "AK26": 5
+        }
 
 
 class SpecialSubjects:
