@@ -14,7 +14,7 @@ def run_timetable_generation():
         total_classrooms=8,
         total_labs=3
     )
-    timetable = timetable_generator.create_timetable()
+    timetable = timetable_generator.create_timetable(5)
 
 
     # Fitness of each Chromosome
@@ -32,7 +32,7 @@ def run_timetable_generation():
         Defaults.working_days
     )
 
-    overall_fitness, fitness_scores = fitness_calculator.evaluate_timetable_fitness()
+    fitness_scores = fitness_calculator.evaluate_timetable_fitness()
 
 
     # Selection of all Chromosomes

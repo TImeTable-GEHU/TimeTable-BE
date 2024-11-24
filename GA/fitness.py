@@ -43,12 +43,13 @@ class TimetableFitnessEvaluator:
             weekly_fitness = 0
             daily_section_fitness_scores[week] = {}
             teacher_workload_tracking = {}
+            teacher_time_slot_tracking = {}
             for day, day_schedule in week_schedule.items():
                 daily_section_fitness_scores[week][day] = {}
                 day_fitness = 0
                 for section, section_schedule in day_schedule.items():
                     section_fitness = Defaults.starting_section_fitness
-                    teacher_time_slot_tracking = {}
+                  
                     classroom_time_slot_tracking = {}
 
                     for schedule_item in section_schedule:
@@ -57,7 +58,6 @@ class TimetableFitnessEvaluator:
                         assigned_time_slot = TimeIntervalConstant.time_mapping[
                             schedule_item["time_slot"]
                         ]
-                        assigned_subject = schedule_item["subject_id"]
                         section_strength = self.section_student_strength[section]
 
                         # Penalty 1: Double booking a teacher in the same time slot
@@ -65,7 +65,8 @@ class TimetableFitnessEvaluator:
                             section_fitness -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
                         else:
                             teacher_time_slot_tracking[(assigned_teacher, assigned_time_slot)] = section
-                        print(teacher_time_slot_tracking)
+                        
+                        
                         # Penalty 2: Double booking a classroom in the same time slot
                         if (assigned_classroom, assigned_time_slot) in classroom_time_slot_tracking:
                             section_fitness -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
@@ -84,7 +85,6 @@ class TimetableFitnessEvaluator:
                         )
                         if assigned_time_slot not in preferred_time_slots:
                             section_fitness -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
-
                         # Tracking teacher workload
                         if assigned_teacher not in teacher_workload_tracking:
                             teacher_workload_tracking[assigned_teacher] = []
