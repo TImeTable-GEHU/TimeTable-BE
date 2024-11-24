@@ -5,10 +5,8 @@ from Constants.constant import (
     Sections,
     Classrooms,
     RoomCapacity,
-    SubjectQuota,
-    TeacherPreloads,
     SpecialSubjects,
-    Defaults
+    Defaults, SubjectWeeklyQuota
 )
 
 
@@ -18,7 +16,10 @@ class TimeTableGeneration:
         teacher_subject_mapping: dict,
         total_sections: int,
         total_classrooms: int,
-        total_labs: int
+        total_labs: int,
+        teacher_preferences: dict,
+        weekly_workload: dict,
+        special_subjects: dict,
     ):
         self.sections_manager = Sections(total_sections)
         self.classrooms_manager = Classrooms(total_classrooms, total_labs)
@@ -32,16 +33,16 @@ class TimeTableGeneration:
         self.section_strength = self.room_capacity_manager.section_strength
         self.weekdays = Defaults.working_days
         self.subject_teacher_mapping = teacher_subject_mapping
-        self.subject_quota_limits = SubjectQuota.subject_quota
+        self.subject_quota_limits = SubjectWeeklyQuota.subject_quota
         self.lab_subject_list = SpecialSubjects.Labs
-        self.special_subject_list = SpecialSubjects.special_subjects
-        self.teacher_availability_preferences = TeacherPreloads.teacher_preferences
+        self.special_subject_list = special_subjects
+        self.teacher_availability_preferences = teacher_preferences
         self.available_time_slots = TimeIntervalConstant.time_slots
         self.section_to_classroom_map = {
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
-        self.weekly_workload = TeacherPreloads.weekly_workload
+        self.weekly_workload = weekly_workload
 
 
     def generate_daily_schedule(self, half_day_section_list):

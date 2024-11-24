@@ -40,7 +40,7 @@ class RoomCapacity:
     section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
 
 
-class SubjectQuota:
+class SubjectWeeklyQuota:
     subject_quota = {
         "TCS-531": 3,
         "TCS-502": 3,

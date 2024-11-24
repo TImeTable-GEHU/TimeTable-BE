@@ -5,7 +5,7 @@ from Constants.constant import (
     PenaltyConstants,
     Defaults,
 )
-from Samples.samples import SubjectTeacherMap
+from Samples.samples import SubjectTeacherMap, TeacherWorkload, SpecialSubjects
 
 
 class TimetableFitnessEvaluator:
@@ -116,7 +116,11 @@ if __name__ == "__main__":
         total_sections=total_sections,
         total_classrooms=total_classrooms,
         total_labs=total_labs,
+        teacher_preferences=TeacherWorkload.teacher_preferences,
+        weekly_workload=TeacherWorkload.Weekly_workLoad,
+        special_subjects=SpecialSubjects.special_subjects
     )
+
     generated_timetables = timetable_generator.create_timetable(5)
 
     # Evaluate fitness
