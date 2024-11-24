@@ -3,9 +3,13 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
-from .models import Room, Teacher, Subject
+from .models import Room, Teacher, Subject, Student
 from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
+
+import csv
+from django.core.files.storage import default_storage
+from django.conf import settings
 
 
 @api_view(["POST"])
@@ -120,14 +124,28 @@ def getTeachers(request):
     return Response(serializer.data, status=200)
 
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Teacher, Subject, TeacherSubject
+from .serializers import TeacherSerializer
+
+
 @api_view(["POST"])
 def addTeacher(request):
     """
-    Add a new teacher.
+    Add a new teacher and map the preferred subjects to the teacher.
     """
-    serializer = TeacherSerializer(data=request.data)
+    serializer = TeacherSerializer(data=request.data["teacher"])
+
     if serializer.is_valid():
-        serializer.save()
+        teacher = serializer.save()
+        preferred_subjects = request.data.get("preferred_subjects", [])
+
+        subjects = Subject.objects.filter(subject_name__in=preferred_subjects)
+
+        for subject in subjects:
+            TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
+
         return Response(serializer.data, status=201)
     else:
         return Response(serializer.errors, status=400)
@@ -217,3 +235,37 @@ def deleteSubject(request, pk):
         return Response({"message": "Subject deleted successfully"}, status=200)
     except Subject.DoesNotExist:
         return Response({"error": "Subject not found"}, status=404)
+
+
+def addStudent(
+    student_name,
+    student_id,
+    is_hosteller,
+    location,
+    dept,
+    course,
+    branch,
+    semester,
+    section,
+    cgpa,
+):
+    try:
+        student = Student.objects.create(
+            student_name=student_name,
+            student_id=student_id,
+            is_hosteller=is_hosteller,
+            location=location,
+            dept=dept,
+            course=course,
+            branch=branch,
+            semester=semester,
+            section=section,
+            cgpa=cgpa,
+        )
+        return {
+            "status": "success",
+            "message": "Student added successfully",
+            "student": student,
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
