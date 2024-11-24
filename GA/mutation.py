@@ -46,13 +46,13 @@ class TimeTableMutation:
 
     def mutate_schedule_for_week(self, weekly_schedule):
         """
-        Mutates the time slots for all weekdays in the weekly schedule.
+            Mutates the time slots for all weekdays in the weekly schedule.
 
-        Args:
-            weekly_schedule (dict): The weekly schedule containing days, sections, and data.
+            Args:
+                weekly_schedule (dict): The weekly schedule containing days, sections, and data.
 
-        Returns:
-            dict: The mutated weekly schedule.
+            Returns:
+                dict: The mutated weekly schedule.
         """
         # Create a deep copy to keep the original intact
         mutated_weekly_schedule = copy.deepcopy(weekly_schedule)
