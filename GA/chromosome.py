@@ -6,7 +6,8 @@ from Constants.constant import (
     Classrooms,
     RoomCapacity,
     SpecialSubjects,
-    Defaults, SubjectWeeklyQuota
+    Defaults,
+    SubjectWeeklyQuota
 )
 
 
