@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
@@ -12,87 +12,72 @@ def generateTimetable():
     pass
 
 
-class MongoStatusView(APIView):
+@api_view(["GET"])
+def mongo_status(request):
     """
-    View for checking the connection status of MongoDB.
-    If MongoDB is connected, it returns a list of collections in the database.
+    Check MongoDB connection status.
     """
-
-    def get(self, request):
-        try:
-            mongo_driver = MongoDriver()
-            collections = mongo_driver.db.list_collection_names()
-            return JsonResponse({"mongodb": "Connected", "collections": collections})
-        except Exception as e:
-            return JsonResponse({"mongodb": "Not Connected", "error": str(e)})
+    try:
+        mongo_driver = MongoDriver()
+        collections = mongo_driver.db.list_collection_names()
+        return JsonResponse({"mongodb": "Connected", "collections": collections})
+    except Exception as e:
+        return JsonResponse({"mongodb": "Not Connected", "error": str(e)})
 
 
-class PostgresStatusView(APIView):
+@api_view(["GET"])
+def postgres_status(request):
     """
-    View for checking the connection status of PostgreSQL.
-    If PostgreSQL is connected, it returns a simple query result.
+    Check PostgreSQL connection status.
     """
-
-    def get(self, request):
-        try:
-            postgres_driver = PostgresDriver(
-                dbname=os.getenv("POSTGRES_NAME"),
-                user=os.getenv("POSTGRES_USER"),
-                host=os.getenv("POSTGRES_HOST"),
-                password=os.getenv("POSTGRES_PASSWORD"),
-                port=os.getenv("POSTGRES_PORT"),
-                options="-c search_path=public",
-                logger=None,
-            )
-            query = "SELECT 1;"
-            result = postgres_driver.execute_query(query)
-            return JsonResponse({"postgresql": "Connected", "result": result})
-        except Exception as e:
-            return JsonResponse({"postgresql": "Not Connected", "error": str(e)})
+    try:
+        postgres_driver = PostgresDriver(
+            dbname=os.getenv("POSTGRES_NAME"),
+            user=os.getenv("POSTGRES_USER"),
+            host=os.getenv("POSTGRES_HOST"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            port=os.getenv("POSTGRES_PORT"),
+            options="-c search_path=public",
+            logger=None,
+        )
+        query = "SELECT 1;"  # Simple query to validate the connection
+        result = postgres_driver.execute_query(query)
+        return JsonResponse({"postgresql": "Connected", "result": result})
+    except Exception as e:
+        return JsonResponse({"postgresql": "Not Connected", "error": str(e)})
 
 
-class RoomViewSet(APIView):
+@api_view(["GET"])
+def getRooms(request):
     """
-    Viewset for managing rooms. Supports GET, POST, PUT, DELETE operations.
+    Retrieve a list of all rooms.
     """
+    rooms = Room.objects.all()
+    serializer = RoomSerializer(rooms, many=True)
+    return Response(serializer.data, status=200)
 
-    def get(self, request, pk=None):
-        """
-        Retrieve a list of rooms.
-        """
-        if pk:
-            try:
-                room = Room.objects.get(id=pk)
-                serializer = RoomSerializer(room)
-                return Response(serializer.data, status=200)
-            except Room.DoesNotExist:
-                return Response({"error": "Room not found"}, status=404)
-        else:
-            rooms = Room.objects.all()
-            serializer = RoomSerializer(rooms, many=True)
-            return Response(serializer.data, status=200)
 
-    def post(self, request):
-        """
-        Add a new room.
-        """
-        serializer = RoomSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            generateTimetable()
-            return Response(serializer.data, status=201)
-        else:
-            return Response(serializer.errors, status=400)
+@api_view(["POST"])
+def addRoom(request):
+    """
+    Add a new room.
+    """
+    serializer = RoomSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        generateTimetable()
+        return Response(serializer.data, status=201)
+    else:
+        return Response(serializer.errors, status=400)
 
-    def put(self, request, pk):
-        """
-        Update an existing room.
-        """
-        try:
-            room = Room.objects.get(id=pk)
-        except Room.DoesNotExist:
-            return Response({"error": "Room not found"}, status=404)
 
+@api_view(["PUT"])
+def updateRoom(request, pk):
+    """
+    Update an existing room by ID.
+    """
+    try:
+        room = Room.objects.get(id=pk)
         serializer = RoomSerializer(instance=room, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -100,15 +85,19 @@ class RoomViewSet(APIView):
             return Response(serializer.data, status=200)
         else:
             return Response(serializer.errors, status=400)
+    except Room.DoesNotExist:
+        return Response({"error": "Room not found"}, status=404)
 
-    def delete(self, request, pk):
-        """
-        Delete a room.
-        """
-        try:
-            room = Room.objects.get(id=pk)
-            room.delete()
-            generateTimetable()
-            return Response({"message": "Room deleted successfully"}, status=200)
-        except Room.DoesNotExist:
-            return Response({"error": "Room not found"}, status=404)
+
+@api_view(["DELETE"])
+def deleteRoom(request, pk):
+    """
+    Delete a room by ID.
+    """
+    try:
+        room = Room.objects.get(id=pk)
+        room.delete()
+        generateTimetable()
+        return Response({"message": "Room deleted successfully"}, status=200)
+    except Room.DoesNotExist:
+        return Response({"error": "Room not found"}, status=404)
