@@ -107,34 +107,7 @@ class Is_Conflict:
             self.truncate_schedule()
             self.close_connection()
 
-# Example Timetables
-# chromosome1 = {
-#     "Monday": {
-#         "A": [
-#             {
-#                 "teacher_id": "AP24",
-#                 "subject_id": "SCS-501",
-#                 "classroom_id": "R1",
-#                 "time_slot": "9:00 - 9:55"
-#             }
-#         ]
-#     }
-# }
 
-# chromosome2 = {
-#     "Monday": {
-#         "A": [
-#             {
-#                 "teacher_id": "AK23",
-#                 "subject_id": "CSP-501",
-#                 "classroom_id": "R1",
-#                 "time_slot": "9:00 - 9:55"
-#             }
-#         ]
-#     }
-# }
-
-# Example Usage
 if __name__ == "__main__":
     timetable_processor = Is_Conflict()
     sample_chromosome_1 = SampleChromosome()  # First chromosome
