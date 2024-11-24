@@ -3,13 +3,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
-from .models import Room, Teacher, Subject, Student
+from .models import Room, Teacher, Subject, TeacherSubject, Student
 from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
-
-import csv
-from django.core.files.storage import default_storage
-from django.conf import settings
 
 
 @api_view(["POST"])
@@ -117,17 +113,11 @@ def deleteRoom(request, pk):
 @api_view(["GET"])
 def getTeachers(request):
     """
-    Retrieve a list of all teachers.
+    Retrieve a list of all teachers along with their preferred subjects.
     """
     teachers = Teacher.objects.all()
     serializer = TeacherSerializer(teachers, many=True)
     return Response(serializer.data, status=200)
-
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import Teacher, Subject, TeacherSubject
-from .serializers import TeacherSerializer
 
 
 @api_view(["POST"])
@@ -154,18 +144,37 @@ def addTeacher(request):
 @api_view(["PUT"])
 def updateTeacher(request, pk):
     """
-    Update an existing teacher's detail by ID.
+    Update an existing teacher's detail by ID, including preferred subjects.
     """
     try:
         teacher = Teacher.objects.get(id=pk)
         serializer = TeacherSerializer(
             instance=teacher, data=request.data, partial=True
         )
+
         if serializer.is_valid():
             serializer.save()
+
+            if "preferred_subjects" in request.data:
+                preferred_subjects = request.data["preferred_subjects"]
+                # Clear existing preferred subjects
+                TeacherSubject.objects.filter(teacher_id=teacher).delete()
+                # Map the teacher to the new preferred subjects
+                for subject_name in preferred_subjects:
+                    try:
+                        subject = Subject.objects.get(subject_name=subject_name)
+                        TeacherSubject.objects.create(
+                            teacher_id=teacher, subject_id=subject
+                        )
+                    except Subject.DoesNotExist:
+                        return Response(
+                            {"error": f"Subject '{subject_name}' not found"}, status=404
+                        )
+
             return Response(serializer.data, status=200)
         else:
             return Response(serializer.errors, status=400)
+
     except Teacher.DoesNotExist:
         return Response({"error": "Teacher not found"}, status=404)
 
