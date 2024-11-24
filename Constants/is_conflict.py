@@ -1,6 +1,6 @@
 import psycopg2
-from Samples.sample_chromosome import SampleChromosome
-class Is_Conflict:
+from Samples.samples import SampleChromosome
+class IsConflict:
     def __init__(self, dbname="timetable", user="postgres", password="root", host="localhost", port="5432"):
         self.dbname = dbname
         self.user = user
@@ -30,16 +30,16 @@ class Is_Conflict:
             for day, sections in timetable.items():
                 for section, classes in sections.items():
                     for cls in classes:
-                        # Log the data being inserted for debugging purposes
+                        
                         print(f"Inserting data: {chromosome_name}, {day}, {section}, {cls['teacher_id']}, {cls['subject_id']}, {cls['classroom_id']}, {cls['time_slot']}")
                         self.cursor.execute("""
                             INSERT INTO schedule (chromosome, day, section, teacher_id, subject_id, classroom_id, time_slot)
                             VALUES (%s, %s, %s, %s, %s, %s, %s);
                         """, (chromosome_name, day, section, cls['teacher_id'], cls['subject_id'], cls['classroom_id'], cls['time_slot']))
-            self.conn.commit()  # Ensure the data is committed
+            self.conn.commit()  
             print(f"Schedule data for {chromosome_name} inserted successfully.")
         except Exception as e:
-            self.conn.rollback()  # Rollback if any error occurs
+            self.conn.rollback() 
             print(f"Error inserting schedule data: {e}")
 
     def detect_teacher_conflicts(self):
@@ -109,16 +109,12 @@ class Is_Conflict:
 
 
 if __name__ == "__main__":
-    timetable_processor = Is_Conflict()
-    sample_chromosome_1 = SampleChromosome()  # First chromosome
-    sample_chromosome_2 = SampleChromosome()  # Second chromosome (if needed)
-
-    # Access the schedule directly
-    chromosome1 = sample_chromosome_1.schedule  # Week 1 timetable
-    chromosome2 = sample_chromosome_2.schedule  # Week 2 timetable
+    timetable_processor = IsConflict()
+    sample_chromosome_1 = SampleChromosome()  
+    sample_chromosome_2 = SampleChromosome()  
+    chromosome1 = sample_chromosome_1.schedule  
+    chromosome2 = sample_chromosome_2.schedule 
     conflicts = timetable_processor.process_schedules(chromosome1, chromosome2)
-
-    # Display the result
     print("\nTeacher Conflicts:")
     for conflict in conflicts["teacher_conflicts"]:
         print(f"Teacher ID: {conflict[0]}, Day: {conflict[1]}, Time Slot: {conflict[2]}, Conflict Count: {conflict[3]}")
