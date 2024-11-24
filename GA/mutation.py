@@ -1,9 +1,11 @@
 import copy
 import random
 
+from Constants.constant import Defaults
+
 
 class TimeTableMutation:
-    def __init__(self, mutation_rate = random.random()):
+    def __init__(self, mutation_rate = 0.7):
         """
             Initializes the Mutation class with a specified mutation rate.
 
@@ -70,4 +72,16 @@ class TimeTableMutation:
 
 
 class TimeTableCrossOver:
-    pass
+    def perform_crossover(self, timetable1: dict, timetable2: dict):
+        """
+            Crossovers two timetables.
+            Rule1: Swap the entire day TT.
+        """
+
+        crossover_days = Defaults.working_days
+
+        # Perform the crossover between week1 and week2
+        for day in crossover_days:
+            timetable1[day], timetable2[day] = timetable1[day], timetable1[day]
+
+        return timetable1, timetable2
