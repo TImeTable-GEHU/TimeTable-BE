@@ -20,6 +20,7 @@ class Subject(models.Model):
     credits = models.IntegerField()
     dept = models.CharField(max_length=50)
     course = models.CharField(max_length=100)
+    branch = models.CharField(max_length=100, default="")
 
     def __str__(self):
         return f"{self.subject_name} ({self.subject_code}) - {self.dept} {self.semester} sem"
@@ -58,6 +59,7 @@ class Student(models.Model):
     location = models.CharField(max_length=100)
     dept = models.CharField(max_length=50)
     course = models.CharField(max_length=100)
+    branch = models.CharField(max_length=100, default="")
     semester = models.IntegerField()
     section = models.CharField(max_length=2)
     cgpa = models.DecimalField(max_digits=4, decimal_places=2)
