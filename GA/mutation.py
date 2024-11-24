@@ -46,14 +46,15 @@ class TimeTableMutation:
 
     def mutate_schedule_for_week(self, weekly_schedule):
         """
-        Mutates the time slots for all weekdays in the weekly schedule.
+            Mutates the time slots for all weekdays in the weekly schedule.
 
-        Args:
-            weekly_schedule (dict): The weekly schedule containing days, sections, and data.
+            Args:
+                weekly_schedule (dict): The weekly schedule containing days, sections, and data.
 
-        Returns:
-            dict: The mutated weekly schedule.
+            Returns:
+                dict: The mutated weekly schedule.
         """
+
         # Create a deep copy to keep the original intact
         mutated_weekly_schedule = copy.deepcopy(weekly_schedule)
 
@@ -64,7 +65,6 @@ class TimeTableMutation:
 
             # Randomly select sections to mutate
             sections_to_mutate = random.sample(total_sections, num_to_mutate)
-
             for section in sections_to_mutate:
                 self.mutate_time_slots_in_section(day_schedule, section)
 
@@ -82,6 +82,7 @@ class TimeTableCrossOver:
 
         # Perform the crossover between week1 and week2
         for day in crossover_days:
-            timetable1[day], timetable2[day] = timetable1[day], timetable1[day]
+            if day in (timetable1, timetable2):
+                timetable1[day], timetable2[day] = timetable1[day], timetable1[day]
 
         return timetable1, timetable2
