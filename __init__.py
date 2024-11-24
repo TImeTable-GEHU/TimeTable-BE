@@ -47,4 +47,8 @@ def run_timetable_generation():
 
 
     # Store best of Chromosomes
-run_timetable_generation()
+
+
+for generation in range(Defaults.total_no_of_generations):
+    # todo: refactor this to support next generations.
+    run_timetable_generation()
