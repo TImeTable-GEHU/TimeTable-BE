@@ -49,6 +49,9 @@ def run_timetable_generation():
     # Store best of Chromosomes
 
 
+# todo: this will also be a single function that will call the iterations inside,
+#  since the BE will call a single function.
+
 for generation in range(Defaults.total_no_of_generations):
     # todo: refactor this to support next generations.
     run_timetable_generation()

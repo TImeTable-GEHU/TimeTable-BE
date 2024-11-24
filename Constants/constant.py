@@ -113,7 +113,7 @@ class TeacherPreloads:
         "AP24": 5,
         "VD25": 5,
         "AK26": 5
-        }
+    }
 
 
 class SpecialSubjects:
