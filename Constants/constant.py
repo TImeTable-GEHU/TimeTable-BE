@@ -1,5 +1,11 @@
-class WorkingDays:
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+class Defaults:
+    # All the defaults values over GA folder.
+    room_capacity = 60
+    working_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    starting_section_fitness = 1000
+    max_class_capacity = 250
+    initial_no_of_chromosomes = 10
+    total_no_of_generations = 10
 
 
 class Sections:
@@ -9,31 +15,23 @@ class Sections:
         self.sections = [chr(65 + i) for i in range(section_number)]
 
 
-class SubjectTeacherMap:
-    subject_teacher_map = {
-        "TCS-531": ["AB01", "PK02"],
-        "TCS-502": ["SS03", "AA04", "AC05"],
-        "TCS-503": ["SP06", "DP07", "AC05"],
-        "PCS-506": ["AD08", "RD09"],
-        "TMA-502": ["BJ10", "RS11", "JM12", "NJ13"],
-        "PMA-502": ["PM14", "AD08", "AA15"],
-        "TCS-509": ["SJ16", "AB17", "HP18", "SG19"],
-        "XCS-501": ["DT20", "PA21", "NB22"],
-        "CSP-501": ["AK23"],
-        "SCS-501": ["AP24"],
-        "PCS-503": ["RS11", "DP07", "SP06", "VD25"],
-        "Placement_Class": ["AK26"],
-    }
-
-
 class Classrooms:
-    classrooms = ["R1", "R2", "R3", "R4", "R5"]
-    labs = ["L1", "L2", "L3", "L4", "L5"]
+    classrooms = 0
+    labs = 0
+
+    def __init__(self, room_count, lab_count):
+        self.classrooms = [f"R{i + 1}" for i in range(room_count)]
+        self.labs = [f"L{i + 1}" for i in range(lab_count)]
 
 
 class RoomCapacity:
-    room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
-    section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
+    room_capacity = 0
+    section_strength = 0
+
+    def __init__(self, classrooms, sections, default_capacity=Defaults.room_capacity):
+       
+        self.room_capacity = {room: default_capacity for room in classrooms}
+        self.section_strength = {section: default_capacity for section in sections}
 
 
 class SubjectQuota:
@@ -49,10 +47,16 @@ class SubjectQuota:
         "CSP-501": 1,
         "SCS-501": 1,
         "PCS-503": 1,
+        "TCS-511":2,
+        "TCS-592":2,
+        "TCS-512":2,
+        "TCS-519":2,
+        "PCS-512":1,
         "Placement_Class": 1,
     }
-    
-class TeacherPreferences:
+
+
+class TeacherPreloads:
     teacher_preferences = {
         "AB01": [1],
         "PK02": [1, 2, 3, 4, 5, 6, 7],
@@ -82,10 +86,40 @@ class TeacherPreferences:
         "AK26": [5],
     }
 
+    weekly_workload={
+        "AB01": 5,
+        "PK02": 5,
+        "SS03": 5,
+        "AA04": 5,
+        "AC05": 5,
+        "SP06": 5,
+        "DP07": 5,
+        "AD08": 5,
+        "RD09": 5,
+        "BJ10": 5,
+        "RS11": 5,
+        "JM12": 5,
+        "NJ13": 5,
+        "PM14": 5,
+        "AA15": 5,
+        "SJ16": 5,
+        "AB17": 5,
+        "HP18": 5,
+        "SG19": 5,
+        "DT20": 5,
+        "PA21": 5,
+        "NB22": 5,
+        "AK23": 5,
+        "AP24": 5,
+        "VD25": 5,
+        "AK26": 5
+    }
+
 
 class SpecialSubjects:
     special_subjects = ["Placement_Class"]
-    Labs=["PCS-506", "PCS-503", "PMA-502"]
+    Labs=["PCS-506", "PCS-503", "PMA-502","PCS-512"]
+    # specialization_subjects=["TCS-511","TCS-592","TCS-512","TCS-519","PCS-512"]
 
 
 class PenaltyConstants:
@@ -105,6 +139,5 @@ class SectionsConstants:
     }
 
     ATTRIBUTE_CONDITIONS = {
-        'hostler': lambda student: student['Hostler'],
-        # Additional conditions can be added here
+        'hostler': lambda student: student.get('Hostler', False),
     }
