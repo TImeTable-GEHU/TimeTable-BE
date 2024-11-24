@@ -21,6 +21,7 @@ class TimeTableGeneration:
         special_subjects: dict,
         subject_quota_limits: dict,
         labs_list: list,
+        teacher_duty_days: dict
     ):
         self.sections_manager = Sections(total_sections)
         self.classrooms_manager = Classrooms(total_classrooms, total_labs)
@@ -39,12 +40,12 @@ class TimeTableGeneration:
         self.special_subject_list = special_subjects
         self.teacher_availability_preferences = teacher_preferences
         self.available_time_slots = TimeIntervalConstant.time_slots
+        self.teacher_duty_days = teacher_duty_days
         self.section_to_classroom_map = {
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
         self.weekly_workload = teacher_weekly_workload
-
 
     def generate_daily_schedule(self, half_day_section_list):
         daily_schedule = {}
@@ -57,11 +58,14 @@ class TimeTableGeneration:
         }
         teacher_workload_tracker = {teacher: 0 for teacher in self.weekly_workload.keys()}
 
-        for section in self.sections:
+        for i, section in enumerate(self.sections):
             section_schedule = []
             subjects_scheduled_today = set()
             assigned_classroom = self.section_to_classroom_map[section]
             total_slots_for_section = 4 if section in half_day_section_list else 7
+
+            # Cycle through weekdays if there are more sections than weekdays
+            week_day = self.weekdays[i % len(self.weekdays)]  # Ensure it wraps around
 
             for slot_index in range(1, total_slots_for_section + 1):
                 current_time_slot = self.available_time_slots.get(slot_index)
@@ -96,6 +100,10 @@ class TimeTableGeneration:
                         teacher_iterator = subject_teacher_tracker[selected_subject]
                         try:
                             potential_teacher = next(teacher_iterator)
+                            for week_day in self.weekdays:
+                            # Ensure the teacher is available on the current day
+                             if week_day not in self.teacher_duty_days.get(potential_teacher, []):
+                                continue
 
                             # Ensure the teacher's workload does not exceed their weekly limit
                             if teacher_workload_tracker[potential_teacher] < self.weekly_workload[potential_teacher]:
@@ -139,7 +147,6 @@ class TimeTableGeneration:
             daily_schedule[section] = section_schedule
 
         return daily_schedule
-
 
     def create_timetable(self, num_weeks):
         timetable = {}

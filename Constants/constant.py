@@ -54,6 +54,7 @@ class PenaltyConstants:
     PENALTY_OVER_CAPACITY = 25
     PENALTY_UN_PREFERRED_SLOT = 5
     PENALTY_OVERLOAD_TEACHER = 10
+    PENALTY_NON_DUTY_DAY=40
 
 
 class SectionsConstants:

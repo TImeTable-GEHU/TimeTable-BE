@@ -128,6 +128,34 @@ class TeacherWorkload:
         "VD25": [1, 2, 3, 4, 5, 6, 7],
         "AK26": [5],
     }
+    teacher_duty_days = {
+        "AB01": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "PK02": ["Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "SS03": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AA04": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AC05": ["Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "SP06": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "DP07": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AD08": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "RD09": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "BJ10": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "RS11": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "JM12": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "NJ13": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "PM14": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AA15": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "SJ16": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AB17": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "HP18": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "SG19": ["Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "DT20": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "PA21": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "NB22": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "AK23": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "AP24": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "VD25": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+        "AK26": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"],
+    }
 class SampleChromosome:
     schedule1={
             "Monday": {

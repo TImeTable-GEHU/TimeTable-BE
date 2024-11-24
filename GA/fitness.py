@@ -5,7 +5,7 @@ from Constants.constant import (
     PenaltyConstants,
     Defaults,
 )
-from Samples.samples import SubjectTeacherMap, TeacherWorkload, SpecialSubjects, SubjectWeeklyQuota, Classrooms
+from Samples.samples import SubjectTeacherMap, SpecialSubjects, SubjectWeeklyQuota, Classrooms, TeacherWorkload
 
 
 class TimetableFitnessEvaluator:
@@ -44,12 +44,13 @@ class TimetableFitnessEvaluator:
             daily_section_fitness_scores[week] = {}
             teacher_workload_tracking = {}
             teacher_time_slot_tracking = {}
+
             for day, day_schedule in week_schedule.items():
                 daily_section_fitness_scores[week][day] = {}
                 day_fitness = 0
                 for section, section_schedule in day_schedule.items():
                     section_fitness = Defaults.starting_section_fitness
-                  
+
                     classroom_time_slot_tracking = {}
 
                     for schedule_item in section_schedule:
@@ -65,8 +66,7 @@ class TimetableFitnessEvaluator:
                             section_fitness -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
                         else:
                             teacher_time_slot_tracking[(assigned_teacher, assigned_time_slot)] = section
-                        
-                        
+
                         # Penalty 2: Double booking a classroom in the same time slot
                         if (assigned_classroom, assigned_time_slot) in classroom_time_slot_tracking:
                             section_fitness -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
@@ -83,17 +83,23 @@ class TimetableFitnessEvaluator:
                         preferred_time_slots = self.teacher_time_preferences.get(
                             assigned_teacher, []
                         )
-                        print(preferred_time_slots)
                         if assigned_time_slot not in preferred_time_slots:
                             section_fitness -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
+
+                        # Penalty 5: Scheduling teacher on a non-duty day
+                        assigned_day = day
+                        if assigned_day not in TeacherWorkload.teacher_duty_days.get(assigned_teacher, []):
+                            section_fitness -= PenaltyConstants.PENALTY_NON_DUTY_DAY
+
                         # Tracking teacher workload
                         if assigned_teacher not in teacher_workload_tracking:
                             teacher_workload_tracking[assigned_teacher] = []
                         teacher_workload_tracking[assigned_teacher].append(assigned_time_slot)
 
-                    # Penalty 5: Exceeding teacher daily workload
+                    # Penalty 6: Exceeding teacher daily workload
                     for teacher, times_assigned in teacher_workload_tracking.items():
-                        if len(times_assigned) > self.teacher_daily_workload.get(teacher,  self.teacher_daily_workload ):
+                        allowed_workload = self.teacher_daily_workload.get(teacher, self.teacher_daily_workload)
+                        if len(times_assigned) > allowed_workload:
                             section_fitness -= PenaltyConstants.PENALTY_OVERLOAD_TEACHER
 
                     daily_section_fitness_scores[week][day][section] = section_fitness
@@ -111,20 +117,19 @@ if __name__ == "__main__":
     total_classrooms = 8
     total_labs = 3
 
-
     # Generate timetable
     timetable_generator = TimeTableGeneration(
-            teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
-            total_sections=6,
-            total_classrooms=8,
-            total_labs=3,
-            teacher_preferences=TeacherWorkload.teacher_preferences,
-            teacher_weekly_workload=TeacherWorkload.Weekly_workLoad,
-            special_subjects=SpecialSubjects.special_subjects,
-            subject_quota_limits=SubjectWeeklyQuota.subject_quota,
-            labs_list=Classrooms.labs,
-        )
-
+        teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
+        total_sections=total_sections,
+        total_classrooms=total_classrooms,
+        total_labs=total_labs,
+        teacher_preferences=TeacherWorkload.teacher_preferences,
+        teacher_weekly_workload=TeacherWorkload.Weekly_workLoad,
+        special_subjects=SpecialSubjects.special_subjects,
+        subject_quota_limits=SubjectWeeklyQuota.subject_quota,
+        labs_list=SpecialSubjects.Labs,
+        teacher_duty_days=TeacherWorkload.teacher_duty_days,
+    )
     generated_timetables = timetable_generator.create_timetable(5)
 
     # Evaluate fitness
