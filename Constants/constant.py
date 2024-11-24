@@ -35,10 +35,11 @@ class TeacherPreloads:
         self.teacher_preferences = teacher_preferences
         self.weekly_workload = weekly_workload
 
+
 class TeachersDutyDays:
     def __init__(self, teacher_duty_days: dict):
         self.teacher_duty_days = teacher_duty_days
-        
+
 
 class SpecialSubjects:
     def __init__(self, special_subjects: list, labs: list, specialization_subjects: list):
