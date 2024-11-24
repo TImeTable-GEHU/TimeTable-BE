@@ -89,15 +89,15 @@ class TimetableProcessor:
 
             # Check for Teacher Conflicts
             teacher_conflicts = self.detect_teacher_conflicts()
-            print("\nTeacher Conflicts:")
-            for conflict in teacher_conflicts:
-                print(f"Teacher ID: {conflict[0]}, Day: {conflict[1]}, Time Slot: {conflict[2]}, Conflict Count: {conflict[3]}")
 
             # Check for Classroom Conflicts
             classroom_conflicts = self.detect_classroom_conflicts()
-            print("\nClassroom Conflicts:")
-            for conflict in classroom_conflicts:
-                print(f"Classroom ID: {conflict[0]}, Day: {conflict[1]}, Time Slot: {conflict[2]}, Conflict Count: {conflict[3]}")
+
+            # Return both conflicts as a dictionary
+            return {
+                "teacher_conflicts": teacher_conflicts,
+                "classroom_conflicts": classroom_conflicts
+            }
 
         finally:
             # Cleanup and close database connection
@@ -115,6 +115,12 @@ chromosome1 = {
         "B": [
             {"teacher_id": "RS11", "subject_id": "TMA-502", "classroom_id": "R2", "time_slot": "9:00 - 9:55"}
         ]
+    },
+     "Tuesday": {
+        "A": [
+            {"teacher_id": "AP24", "subject_id": "SCS-501", "classroom_id": "R1", "time_slot": "9:00 - 9:55"}
+        ],
+        
     }
 }
 
@@ -143,4 +149,13 @@ chromosome2 = {
 # Example Usage
 if __name__ == "__main__":
     timetable_processor = TimetableProcessor()
-    timetable_processor.process_schedules(chromosome1, chromosome2)
+    conflicts = timetable_processor.process_schedules(chromosome1, chromosome2)
+
+    # Display the result
+    print("\nTeacher Conflicts:")
+    for conflict in conflicts["teacher_conflicts"]:
+        print(f"Teacher ID: {conflict[0]}, Day: {conflict[1]}, Time Slot: {conflict[2]}, Conflict Count: {conflict[3]}")
+
+    print("\nClassroom Conflicts:")
+    for conflict in conflicts["classroom_conflicts"]:
+        print(f"Classroom ID: {conflict[0]}, Day: {conflict[1]}, Time Slot: {conflict[2]}, Conflict Count: {conflict[3]}")
