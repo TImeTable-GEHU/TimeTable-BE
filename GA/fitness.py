@@ -38,30 +38,19 @@ class TimetableFitnessEvaluator:
     def evaluate_timetable_fitness(self):
         daily_section_fitness_scores = {}
         weekly_fitness_scores = {}
-        current_week = 1
 
-        # Iterate through weekly timetable chunks
-        for day_index in range(0, len(self.timetable), len(self.available_days)):
+        for week, week_schedule in self.timetable.items():
             weekly_fitness = 0
-            weekly_label = f"Week {current_week}"
+            daily_section_fitness_scores[week] = {}
             teacher_workload_tracking = {}
-            
-            for week_day_index, day_name in enumerate(self.available_days):
-                week_day_key = f"{weekly_label} - {day_name}"
-                if week_day_key not in self.timetable:
-                    continue
-
-                daily_schedule = self.timetable[week_day_key]
-                daily_section_fitness_scores[week_day_key] = {}
+            for day, day_schedule in week_schedule.items():
+                daily_section_fitness_scores[week][day] = {}
                 day_fitness = 0
-
-                # Iterate through each section
-                for section, section_schedule in daily_schedule.items():
+                for section, section_schedule in day_schedule.items():
                     section_fitness = Defaults.starting_section_fitness
                     teacher_time_slot_tracking = {}
                     classroom_time_slot_tracking = {}
 
-                    # Iterate through each schedule item in the section
                     for schedule_item in section_schedule:
                         assigned_teacher = schedule_item["teacher_id"]
                         assigned_classroom = schedule_item["classroom_id"]
@@ -72,11 +61,11 @@ class TimetableFitnessEvaluator:
                         section_strength = self.section_student_strength[section]
 
                         # Penalty 1: Double booking a teacher in the same time slot
-                        if (assigned_teacher, assigned_time_slot) in teacher_time_slot_tracking:
+                        if (assigned_teacher, assigned_time_slot) in teacher_time_slot_tracking.keys():
                             section_fitness -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
                         else:
                             teacher_time_slot_tracking[(assigned_teacher, assigned_time_slot)] = section
-                            
+                        print(teacher_time_slot_tracking)
                         # Penalty 2: Double booking a classroom in the same time slot
                         if (assigned_classroom, assigned_time_slot) in classroom_time_slot_tracking:
                             section_fitness -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
@@ -103,16 +92,15 @@ class TimetableFitnessEvaluator:
 
                     # Penalty 5: Exceeding teacher daily workload
                     for teacher, times_assigned in teacher_workload_tracking.items():
-                        if len(times_assigned) > self.teacher_daily_workload.get(teacher, self.teacher_daily_workload):
+                        if len(times_assigned) > self.teacher_daily_workload.get(teacher,  self.teacher_daily_workload ):
                             section_fitness -= PenaltyConstants.PENALTY_OVERLOAD_TEACHER
 
-                    daily_section_fitness_scores[week_day_key][section] = section_fitness
+                    daily_section_fitness_scores[week][day][section] = section_fitness
                     day_fitness += section_fitness
 
                 weekly_fitness += day_fitness
 
-            weekly_fitness_scores[weekly_label] = weekly_fitness
-            current_week += 1
+            weekly_fitness_scores[week] = weekly_fitness
 
         return daily_section_fitness_scores, weekly_fitness_scores
 
@@ -122,6 +110,7 @@ if __name__ == "__main__":
     total_classrooms = 8
     total_labs = 3
 
+    # Generate timetable
     timetable_generator = TimeTableGeneration(
         teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
         total_sections=total_sections,
@@ -130,6 +119,7 @@ if __name__ == "__main__":
     )
     generated_timetables = timetable_generator.create_timetable(5)
 
+    # Evaluate fitness
     fitness_evaluator = TimetableFitnessEvaluator(
         generated_timetables,
         timetable_generator.sections,
@@ -144,13 +134,13 @@ if __name__ == "__main__":
         Defaults.working_days,
     )
 
-    overall_fitness, section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
+    section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
 
+    # Save results
     with open("GA/chromosome.json", "w") as timetable_file:
         json.dump(generated_timetables, timetable_file, indent=4)
 
     fitness_output_data = {
-        "overall_fitness": overall_fitness,
         "section_fitness_scores": section_fitness_data,
         "weekly_fitness_scores": weekly_fitness_data,
     }
@@ -158,5 +148,4 @@ if __name__ == "__main__":
     with open("GA/fitness.json", "w") as fitness_scores_file:
         json.dump(fitness_output_data, fitness_scores_file, indent=4)
 
-    print(f"Overall Fitness: {overall_fitness}")
     print("Timetable and fitness scores have been saved.")

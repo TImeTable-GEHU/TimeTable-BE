@@ -10,7 +10,6 @@ from Constants.constant import (
     SpecialSubjects,
     Defaults
 )
-from Samples.samples import TeacherWorkload
 
 
 class TimeTableGeneration:
@@ -42,7 +41,7 @@ class TimeTableGeneration:
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
-        self.weekly_workload = TeacherWorkload.Weekly_workLoad
+        self.weekly_workload = TeacherPreloads.weekly_workload
 
 
     def generate_daily_schedule(self, half_day_section_list):
@@ -54,6 +53,7 @@ class TimeTableGeneration:
             section: {subject: 0 for subject in self.subject_teacher_mapping.keys()}
             for section in self.sections
         }
+        teacher_workload_tracker = {teacher: 0 for teacher in self.weekly_workload.keys()}
 
         for section in self.sections:
             section_schedule = []
@@ -93,14 +93,19 @@ class TimeTableGeneration:
                     if selected_subject not in subjects_scheduled_today:
                         teacher_iterator = subject_teacher_tracker[selected_subject]
                         try:
-                            assigned_teacher = next(teacher_iterator)
+                            potential_teacher = next(teacher_iterator)
+
+                            # Ensure the teacher's workload does not exceed their weekly limit
+                            if teacher_workload_tracker[potential_teacher] < self.weekly_workload[potential_teacher]:
+                                assigned_teacher = potential_teacher
+                                teacher_workload_tracker[assigned_teacher] += 1
+                                break
                         except StopIteration:
                             teacher_iterator = iter(self.subject_teacher_mapping[selected_subject])
-                            assigned_teacher = next(teacher_iterator)
                             subject_teacher_tracker[selected_subject] = teacher_iterator
-                        break
+                            continue
 
-                    available_subjects_for_slot.remove(selected_subject)
+                        available_subjects_for_slot.remove(selected_subject)
 
                 # Assign placeholder if no suitable subject/teacher is found
                 if selected_subject is None or assigned_teacher is None:
@@ -134,10 +139,12 @@ class TimeTableGeneration:
         return daily_schedule
 
 
-    def create_timetable(self, total_weeks=5):
-        complete_timetable = {}
-        for week_number in range(1, total_weeks + 1):
-            for weekday in self.weekdays:
+    def create_timetable(self, num_weeks):
+        timetable = {}
+        for week in range(1, num_weeks + 1):
+            week_schedule = {}
+            for week_day in self.weekdays:
                 half_day_sections = random.sample(self.sections, len(self.sections) // 2)
-                complete_timetable[f"Week {week_number} - {weekday}"] = self.generate_daily_schedule(half_day_sections)
-        return complete_timetable
+                week_schedule[week_day] = self.generate_daily_schedule(half_day_sections)
+            timetable[f"Week {week}"] = week_schedule
+        return timetable
