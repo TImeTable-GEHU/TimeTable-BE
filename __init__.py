@@ -3,7 +3,7 @@ from Constants.constant import Defaults
 from GA.selection import TimeTableSelection
 from GA.fitness import TimetableFitnessEvaluator
 from GA.chromosome import TimeTableGeneration
-from Samples.samples import SubjectTeacherMap
+from Samples.samples import SubjectTeacherMap, TeacherWorkload, SpecialSubjects
 
 
 # Create Chromosomes
@@ -12,7 +12,10 @@ def run_timetable_generation():
         teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
         total_sections=6,
         total_classrooms=8,
-        total_labs=3
+        total_labs=3,
+        teacher_preferences=TeacherWorkload.teacher_preferences,
+        weekly_workload=TeacherWorkload.Weekly_workLoad,
+        special_subjects=SpecialSubjects.special_subjects
     )
     timetable = timetable_generator.create_timetable(Defaults.initial_no_of_chromosomes)
 
