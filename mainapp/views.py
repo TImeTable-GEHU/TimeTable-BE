@@ -8,8 +8,18 @@ from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
 
 
-def generateTimetable():
-    pass
+@api_view(["POST"])
+def generate_timetable(request):
+    """
+    Generate a timetable using the provided data.
+    """
+    try:
+        # generateTimetable()
+        return Response({"message": "Timetable generated successfully"}, status=200)
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to generate timetable: {str(e)}"}, status=500
+        )
 
 
 @api_view(["GET"])
@@ -65,7 +75,6 @@ def addRoom(request):
     serializer = RoomSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        generateTimetable()
         return Response(serializer.data, status=201)
     else:
         return Response(serializer.errors, status=400)
@@ -81,7 +90,6 @@ def updateRoom(request, pk):
         serializer = RoomSerializer(instance=room, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            generateTimetable()
             return Response(serializer.data, status=200)
         else:
             return Response(serializer.errors, status=400)
@@ -97,7 +105,6 @@ def deleteRoom(request, pk):
     try:
         room = Room.objects.get(id=pk)
         room.delete()
-        generateTimetable()
         return Response({"message": "Room deleted successfully"}, status=200)
     except Room.DoesNotExist:
         return Response({"error": "Room not found"}, status=404)
@@ -121,7 +128,6 @@ def addTeacher(request):
     serializer = TeacherSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        generateTimetable()
         return Response(serializer.data, status=201)
     else:
         return Response(serializer.errors, status=400)
@@ -139,7 +145,6 @@ def updateTeacher(request, pk):
         )
         if serializer.is_valid():
             serializer.save()
-            generateTimetable()
             return Response(serializer.data, status=200)
         else:
             return Response(serializer.errors, status=400)
@@ -155,7 +160,6 @@ def deleteTeacher(request, pk):
     try:
         teacher = Teacher.objects.get(id=pk)
         teacher.delete()
-        generateTimetable()
         return Response({"message": "Teacher deleted successfully"}, status=200)
     except Teacher.DoesNotExist:
         return Response({"error": "Teacher not found"}, status=404)

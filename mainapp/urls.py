@@ -17,6 +17,7 @@ from .views import (
     addSubject,
     updateSubject,
     deleteSubject,
+    generate_timetable,
 )
 
 schema_view = get_schema_view(
@@ -50,6 +51,8 @@ urlpatterns = [
     path("addSubject/", addSubject, name="add-subject"),
     path("updateSubject/<int:pk>/", updateSubject, name="update-subject"),
     path("deleteSubject/<int:pk>/", deleteSubject, name="delete-subject"),
+    # generate timetable
+    path("generateTimetable/", generate_timetable, name="generate-timetable"),
     # swagger
     path(
         "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"
