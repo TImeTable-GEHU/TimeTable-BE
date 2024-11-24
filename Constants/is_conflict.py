@@ -112,8 +112,8 @@ if __name__ == "__main__":
     timetable_processor = IsConflict()
     sample_chromosome_1 = SampleChromosome()  
     sample_chromosome_2 = SampleChromosome()  
-    chromosome1 = sample_chromosome_1.schedule  
-    chromosome2 = sample_chromosome_2.schedule 
+    chromosome1 = sample_chromosome_1.schedule1  
+    chromosome2 = sample_chromosome_2.schedule2 
     conflicts = timetable_processor.process_schedules(chromosome1, chromosome2)
     print("\nTeacher Conflicts:")
     for conflict in conflicts["teacher_conflicts"]:
