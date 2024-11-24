@@ -30,8 +30,9 @@ class SubjectAdmin(admin.ModelAdmin):
         "credits",
         "dept",
         "course",
+        "branch",
     )
-    search_fields = ("subject_name", "subject_code", "dept", "course")
+    search_fields = ("subject_name", "subject_code", "dept", "course", "branch")
 
 
 @admin.register(TeacherSubject)
