@@ -5,7 +5,7 @@ from Constants.constant import (
     PenaltyConstants,
     Defaults,
 )
-from Samples.samples import SubjectTeacherMap, TeacherWorkload, SpecialSubjects
+from Samples.samples import SubjectTeacherMap, TeacherWorkload, SpecialSubjects, SubjectWeeklyQuota, Classrooms
 
 
 class TimetableFitnessEvaluator:
@@ -83,6 +83,7 @@ class TimetableFitnessEvaluator:
                         preferred_time_slots = self.teacher_time_preferences.get(
                             assigned_teacher, []
                         )
+                        print(preferred_time_slots)
                         if assigned_time_slot not in preferred_time_slots:
                             section_fitness -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
                         # Tracking teacher workload
@@ -110,16 +111,19 @@ if __name__ == "__main__":
     total_classrooms = 8
     total_labs = 3
 
+
     # Generate timetable
     timetable_generator = TimeTableGeneration(
-        teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
-        total_sections=total_sections,
-        total_classrooms=total_classrooms,
-        total_labs=total_labs,
-        teacher_preferences=TeacherWorkload.teacher_preferences,
-        weekly_workload=TeacherWorkload.Weekly_workLoad,
-        special_subjects=SpecialSubjects.special_subjects
-    )
+            teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
+            total_sections=6,
+            total_classrooms=8,
+            total_labs=3,
+            teacher_preferences=TeacherWorkload.teacher_preferences,
+            teacher_weekly_workload=TeacherWorkload.Weekly_workLoad,
+            special_subjects=SpecialSubjects.special_subjects,
+            subject_quota_limits=SubjectWeeklyQuota.subject_quota,
+            labs_list=Classrooms.labs,
+        )
 
     generated_timetables = timetable_generator.create_timetable(5)
 

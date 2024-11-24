@@ -19,8 +19,10 @@ class TimeTableGeneration:
         total_classrooms: int,
         total_labs: int,
         teacher_preferences: dict,
-        weekly_workload: dict,
+        teacher_weekly_workload: dict,
         special_subjects: dict,
+        subject_quota_limits: dict,
+        labs_list: list,
     ):
         self.sections_manager = Sections(total_sections)
         self.classrooms_manager = Classrooms(total_classrooms, total_labs)
@@ -34,8 +36,8 @@ class TimeTableGeneration:
         self.section_strength = self.room_capacity_manager.section_strength
         self.weekdays = Defaults.working_days
         self.subject_teacher_mapping = teacher_subject_mapping
-        self.subject_quota_limits = SubjectWeeklyQuota.subject_quota
-        self.lab_subject_list = SpecialSubjects.Labs
+        self.subject_quota_limits = subject_quota_limits
+        self.lab_subject_list = labs_list
         self.special_subject_list = special_subjects
         self.teacher_availability_preferences = teacher_preferences
         self.available_time_slots = TimeIntervalConstant.time_slots
@@ -43,7 +45,7 @@ class TimeTableGeneration:
             section: self.classrooms[i % len(self.classrooms)]
             for i, section in enumerate(self.sections)
         }
-        self.weekly_workload = weekly_workload
+        self.weekly_workload = teacher_weekly_workload
 
 
     def generate_daily_schedule(self, half_day_section_list):

@@ -26,7 +26,7 @@ class RoomCapacity:
 
 
 class SubjectWeeklyQuota:
-    def __init__(self, subject_quota: dict):
+    def __init__(self, subject_quota):
         self.subject_quota = subject_quota
 
 
