@@ -4,6 +4,7 @@ class Defaults:
     working_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     starting_section_fitness = 100
     max_class_capacity = 250
+    initial_no_of_chromosomes = 10
 
 
 class Sections:

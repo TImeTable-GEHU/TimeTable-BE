@@ -14,7 +14,7 @@ def run_timetable_generation():
         total_classrooms=8,
         total_labs=3
     )
-    timetable = timetable_generator.create_timetable(5)
+    timetable = timetable_generator.create_timetable(Defaults.initial_no_of_chromosomes)
 
 
     # Fitness of each Chromosome
