@@ -1,11 +1,11 @@
 from django.urls import path
-from . import views
+from .views import MongoStatusView, PostgresStatusView, RoomListView, RoomDetailView
 
 urlpatterns = [
-    path("mongo-status/", views.mongo_status),
-    path("postgres-status/", views.postgres_status),
-    path("getRooms/", views.getRooms),
-    path("addRoom/", views.addRoom),
-    path("updateRoom/<int:pk>/", views.updateRoom),
-    path("deleteRoom/<int:pk>/", views.deleteRoom),
+    path("mongo-status/", MongoStatusView.as_view(), name="mongo-status"),
+    path("postgres-status/", PostgresStatusView.as_view(), name="postgres-status"),
+    path("getRooms/", RoomListView.as_view(), name="get-rooms"),
+    path("addRoom/", RoomListView.as_view(), name="add-room"),
+    path("updateRoom/<int:pk>/", RoomDetailView.as_view(), name="update-room"),
+    path("deleteRoom/<int:pk>/", RoomDetailView.as_view(), name="delete-room"),
 ]
