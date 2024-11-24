@@ -13,6 +13,10 @@ from .views import (
     addTeacher,
     updateTeacher,
     deleteTeacher,
+    getSubjects,
+    addSubject,
+    updateSubject,
+    deleteSubject,
 )
 
 schema_view = get_schema_view(
@@ -41,6 +45,11 @@ urlpatterns = [
     path("addTeacher/", addTeacher, name="add-Teacher"),
     path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),
     path("deleteTeacher/<int:pk>/", deleteTeacher, name="delete-Teacher"),
+    # subject's apis
+    path("getSubjects/", getSubjects, name="get-subjects"),
+    path("addSubject/", addSubject, name="add-subject"),
+    path("updateSubject/<int:pk>/", updateSubject, name="update-subject"),
+    path("deleteSubject/<int:pk>/", deleteSubject, name="delete-subject"),
     # swagger
     path(
         "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"

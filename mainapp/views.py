@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
-from .models import Room, Teacher
-from .serializers import RoomSerializer, TeacherSerializer
+from .models import Room, Teacher, Subject
+from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
 
 
@@ -159,3 +159,57 @@ def deleteTeacher(request, pk):
         return Response({"message": "Teacher deleted successfully"}, status=200)
     except Teacher.DoesNotExist:
         return Response({"error": "Teacher not found"}, status=404)
+
+
+@api_view(["GET"])
+def getSubjects(request):
+    """
+    Retrieve a list of subjects.
+    """
+    subjects = Subject.objects.all()
+    serializer = SubjectSerializer(subjects, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+def addSubject(request):
+    """
+    Add a new subject.
+    """
+    serializer = SubjectSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+    else:
+        return Response(serializer.errors, status=400)
+
+
+@api_view(["PUT"])
+def updateSubject(request, pk):
+    """
+    Update an existing subject by ID.
+    """
+    try:
+        subject = Subject.objects.get(id=pk)
+    except Subject.DoesNotExist:
+        return Response({"error": "Subject not found"}, status=404)
+
+    serializer = SubjectSerializer(instance=subject, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=200)
+    else:
+        return Response(serializer.errors, status=400)
+
+
+@api_view(["DELETE"])
+def deleteSubject(request, pk):
+    """
+    Delete a subject by ID.
+    """
+    try:
+        subject = Subject.objects.get(id=pk)
+        subject.delete()
+        return Response({"message": "Subject deleted successfully"}, status=200)
+    except Subject.DoesNotExist:
+        return Response({"error": "Subject not found"}, status=404)
