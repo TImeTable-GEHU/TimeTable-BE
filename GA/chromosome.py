@@ -33,7 +33,7 @@ class TimetableGeneration:
             for i, section in enumerate(self.sections)
         }
 
-    def generate_day_schedule(self, day, half_day_sections, week_number):
+    def generate_day_schedule(self, half_day_sections):
         """
         Generate a schedule for a specific day.
         """
@@ -142,6 +142,7 @@ class TimetableGeneration:
             for week_day in self.days:
                 half_day_sections = random.sample(self.sections, len(self.sections) // 2)
                 timetable[f"Week {week} - {week_day}"] = self.generate_day_schedule(
-                    week_day, half_day_sections, week
+                    half_day_sections
                 )
+
         return timetable

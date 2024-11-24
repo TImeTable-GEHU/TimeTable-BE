@@ -1,35 +1,23 @@
 import random
 import json
 from Constants.time_intervals import TimeIntervalConstant
-from Constants.constant import WorkingDays
+from Constants.constant import WorkingDays, Sections, SubjectTeacherMap, Classrooms, RoomCapacity
+
 
 class TimetableFitness:
-    def __init__(self):
+    def __init__(self, sections):
         self.days = WorkingDays.days
-        self.sections = ["A", "B", "C", "D"]
+        self.sections = sections
         self.time_slots = TimeIntervalConstant.time_slots
 
         # Teacher-subject mapping
-        self.subject_teacher_map = {
-            "TCS-531": ["AB01", "PK02"],
-            "TCS-502": ["SS03", "AA04", "AC05"],
-            "TCS-503": ["SP06", "DP07", "AC05"],
-            "PCS-506": ["AD08", "RD09"],
-            "TMA-502": ["BJ10", "RS11", "JM12", "NJ13"],
-            "PMA-502": ["PM14", "AD08", "AA15"],
-            "TCS-509": ["SJ16", "AB17", "HP18", "SG19"],
-            "XCS-501": ["DT20", "PA21", "NB22"],
-            "CSP-501": ["AK23"],
-            "SCS-501": ["AP24"],
-            "PCS-503": ["RS11", "DP07", "SP06", "VD25"],
-            "Placement_Class": ["AK26"]
-        }
+        self.subject_teacher_map = SubjectTeacherMap.subject_teacher_map
 
         # Classroom and capacity details
-        self.classrooms = ["R1", "R2", "R3", "R4", "R5"]
-        self.lab = ["L1", "L2", "L3", "L4", "L5"]
-        self.room_capacity = {"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250}
-        self.section_strength = {"A": 200, "B": 200, "C": 200, "D": 100}
+        self.classrooms = Classrooms.classrooms
+        self.lab = RoomCapacity.room_capacity
+        self.room_capacity = RoomCapacity.room_capacity
+        self.section_strength = RoomCapacity.section_strength
 
         # Data structures for tracking schedules
         self.teacher_schedule = {slot: {} for slot in self.time_slots}
@@ -227,7 +215,7 @@ class TimetableFitness:
         return week_fitness_scores, section_fitness_scores
 
 # Main Execution
-timetable_fitness = TimetableFitness()
+timetable_fitness = TimetableFitness(Sections(5)) # 5 means we have 5 sections [A, B, C, D, E]
 timetable = timetable_fitness.create_timetable(2)
 week_fitness_scores, fitness_scores = timetable_fitness.calculate_fitness(timetable)
 
