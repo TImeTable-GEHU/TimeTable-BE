@@ -9,6 +9,10 @@ from .views import (
     addRoom,
     updateRoom,
     deleteRoom,
+    getTeachers,
+    addTeacher,
+    updateTeacher,
+    deleteTeacher,
 )
 
 schema_view = get_schema_view(
@@ -27,10 +31,17 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("mongo-status/", mongo_status, name="mongo-status"),
     path("postgres-status/", postgres_status, name="postgres-status"),
+    # room's apis
     path("getRooms/", getRooms, name="get-rooms"),
     path("addRoom/", addRoom, name="add-room"),
     path("updateRoom/<int:pk>/", updateRoom, name="update-room"),
     path("deleteRoom/<int:pk>/", deleteRoom, name="delete-room"),
+    # teacher's apis
+    path("getTeachers/", getTeachers, name="get-Teachers"),
+    path("addTeacher/", addTeacher, name="add-Teacher"),
+    path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),
+    path("deleteTeacher/<int:pk>/", deleteTeacher, name="delete-Teacher"),
+    # swagger
     path(
         "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"
     ),

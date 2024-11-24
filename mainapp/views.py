@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
-from .models import Room
-from .serializers import RoomSerializer
+from .models import Room, Teacher
+from .serializers import RoomSerializer, TeacherSerializer
 import os
 
 
@@ -101,3 +101,61 @@ def deleteRoom(request, pk):
         return Response({"message": "Room deleted successfully"}, status=200)
     except Room.DoesNotExist:
         return Response({"error": "Room not found"}, status=404)
+
+
+@api_view(["GET"])
+def getTeachers(request):
+    """
+    Retrieve a list of all teachers.
+    """
+    teachers = Teacher.objects.all()
+    serializer = TeacherSerializer(teachers, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+def addTeacher(request):
+    """
+    Add a new teacher.
+    """
+    serializer = TeacherSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        generateTimetable()
+        return Response(serializer.data, status=201)
+    else:
+        return Response(serializer.errors, status=400)
+
+
+@api_view(["PUT"])
+def updateTeacher(request, pk):
+    """
+    Update an existing teacher's detail by ID.
+    """
+    try:
+        teacher = Teacher.objects.get(id=pk)
+        serializer = TeacherSerializer(
+            instance=teacher, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            generateTimetable()
+            return Response(serializer.data, status=200)
+        else:
+            return Response(serializer.errors, status=400)
+    except Teacher.DoesNotExist:
+        return Response({"error": "Teacher not found"}, status=404)
+
+
+@api_view(["DELETE"])
+def deleteTeacher(request, pk):
+    """
+    Delete a teacher by ID.
+    """
+    try:
+        teacher = Teacher.objects.get(id=pk)
+        teacher.delete()
+        generateTimetable()
+        return Response({"message": "Teacher deleted successfully"}, status=200)
+    except Teacher.DoesNotExist:
+        return Response({"error": "Teacher not found"}, status=404)
