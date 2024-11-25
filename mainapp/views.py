@@ -77,6 +77,18 @@ def addRoom(request):
     errors = []
 
     for room_data in data:
+        existing_room = Room.objects.filter(
+            room_code=room_data.get("room_code")
+        ).first()
+        if existing_room:
+            errors.append(
+                {
+                    "room_data": room_data,
+                    "error": f"Room with code {room_data.get('room_code')} already exists.",
+                }
+            )
+            continue
+
         serializer = RoomSerializer(data=room_data)
         if serializer.is_valid():
             serializer.save()
@@ -137,16 +149,24 @@ def addTeacher(request):
     """
     Add a new teacher and map the preferred subjects to the teacher.
     """
-    serializer = TeacherSerializer(data=request.data["teacher"])
+    teacher_data = request.data
+    existing_teacher = Teacher.objects.filter(email=teacher_data.get("email")).first()
 
+    if existing_teacher:
+        return Response(
+            {"error": "Teacher with this email already exists."}, status=400
+        )
+
+    serializer = TeacherSerializer(data=teacher_data)
     if serializer.is_valid():
         teacher = serializer.save()
+
         preferred_subjects = request.data.get("preferred_subjects", [])
 
-        subjects = Subject.objects.filter(subject_name__in=preferred_subjects)
-
-        for subject in subjects:
-            TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
+        for subject_name in preferred_subjects:
+            subject = Subject.objects.filter(subject_name=subject_name).first()
+            if subject:
+                TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
 
         return Response(serializer.data, status=201)
     else:
@@ -248,14 +268,11 @@ def addSubject(request):
     """
     Add one or multiple subjects to a specific dept, course, branch, and semester.
     """
-    if isinstance(request.data, list):
-        subjects_data = request.data
-    else:
-        subjects_data = [request.data]
-
+    data = request.data if isinstance(request.data, list) else [request.data]
+    added_subjects = []
     errors = []
 
-    for subject_data in subjects_data:
+    for subject_data in data:
         dept = subject_data.get("dept")
         course = subject_data.get("course")
         branch = subject_data.get("branch", "")
@@ -263,7 +280,10 @@ def addSubject(request):
 
         if not all([dept, course, semester]):
             errors.append(
-                {"error": "Please provide dept, course, and semester for each subject."}
+                {
+                    "subject_data": subject_data,
+                    "error": "Please provide dept, course, and semester for each subject.",
+                }
             )
             continue
 
@@ -274,7 +294,18 @@ def addSubject(request):
         if not all([subject_name, subject_code, credits]):
             errors.append(
                 {
-                    "error": "Please provide subject_name, subject_code, and credits for each subject."
+                    "subject_data": subject_data,
+                    "error": "Please provide subject_name, subject_code, and credits for each subject.",
+                }
+            )
+            continue
+
+        existing_subject = Subject.objects.filter(subject_code=subject_code).first()
+        if existing_subject:
+            errors.append(
+                {
+                    "subject_data": subject_data,
+                    "error": f"Subject with code {subject_code} already exists.",
                 }
             )
             continue
@@ -292,13 +323,20 @@ def addSubject(request):
         serializer = SubjectSerializer(data=subject_dict)
         if serializer.is_valid():
             serializer.save()
+            added_subjects.append(serializer.data)
         else:
-            errors.append(serializer.errors)
+            errors.append({"subject_data": subject_data, "errors": serializer.errors})
 
     if errors:
-        return Response(errors, status=400)
+        return Response(
+            {"added_subjects": added_subjects, "errors": errors},
+            status=400 if not added_subjects else 207,
+        )
 
-    return Response({"message": "Subjects added successfully."}, status=201)
+    return Response(
+        {"message": "Subjects added successfully.", "subjects": added_subjects},
+        status=201,
+    )
 
 
 @api_view(["PUT"])
