@@ -13,7 +13,8 @@ from .views import (
     addTeacher,
     updateTeacher,
     deleteTeacher,
-    getSubjects,
+    getAllSubjects,
+    getFilteredSubjects,
     addSubject,
     updateSubject,
     deleteSubject,
@@ -47,11 +48,14 @@ urlpatterns = [
     path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),
     path("deleteTeacher/<int:pk>/", deleteTeacher, name="delete-Teacher"),
     # subject's apis
-    path("getSubjects/", getSubjects, name="get-subjects"),
+    path("getAllSubjects/", getAllSubjects, name="get-all-subjects"),
+    path(
+        "getFilteredSubjects/filter", getFilteredSubjects, name="get-filtered-subjects"
+    ),
     path("addSubject/", addSubject, name="add-subject"),
     path("updateSubject/<int:pk>/", updateSubject, name="update-subject"),
     path("deleteSubject/<int:pk>/", deleteSubject, name="delete-subject"),
-    # generate timetable
+    # generate timetable api
     path("generateTimetable/", generate_timetable, name="generate-timetable"),
     # swagger
     path(

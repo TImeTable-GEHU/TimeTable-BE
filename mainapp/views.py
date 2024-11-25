@@ -205,11 +205,40 @@ def deleteTeacher(request, pk):
 
 
 @api_view(["GET"])
-def getSubjects(request):
+def getAllSubjects(request):
     """
-    Retrieve a list of subjects.
+    Retrieve a list of all subjects.
     """
     subjects = Subject.objects.all()
+    serializer = SubjectSerializer(subjects, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["GET"])
+def getFilteredSubjects(request):
+    """
+    Retrieve subjects based on department, course, branch, and semester.
+    """
+    dept = request.GET.get("dept")
+    course = request.GET.get("course")
+    branch = request.GET.get("branch", "")  # Default to an empty string
+    semester = request.GET.get("semester")
+
+    if not all([dept, course, semester]):
+        return Response(
+            {"error": "Please provide dept, course, and semester."},
+            status=400,
+        )
+
+    filters = {
+        "dept": dept,
+        "course": course,
+        "semester": semester,
+    }
+    if branch:  # Add branch to filters only if it's provided
+        filters["branch"] = branch
+
+    subjects = Subject.objects.filter(**filters)
     serializer = SubjectSerializer(subjects, many=True)
     return Response(serializer.data, status=200)
 
@@ -217,14 +246,59 @@ def getSubjects(request):
 @api_view(["POST"])
 def addSubject(request):
     """
-    Add a new subject.
+    Add one or multiple subjects to a specific dept, course, branch, and semester.
     """
-    serializer = SubjectSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
+    if isinstance(request.data, list):
+        subjects_data = request.data
     else:
-        return Response(serializer.errors, status=400)
+        subjects_data = [request.data]
+
+    errors = []
+
+    for subject_data in subjects_data:
+        dept = subject_data.get("dept")
+        course = subject_data.get("course")
+        branch = subject_data.get("branch", "")
+        semester = subject_data.get("semester")
+
+        if not all([dept, course, semester]):
+            errors.append(
+                {"error": "Please provide dept, course, and semester for each subject."}
+            )
+            continue
+
+        subject_name = subject_data.get("subject_name")
+        subject_code = subject_data.get("subject_code")
+        credits = subject_data.get("credits")
+
+        if not all([subject_name, subject_code, credits]):
+            errors.append(
+                {
+                    "error": "Please provide subject_name, subject_code, and credits for each subject."
+                }
+            )
+            continue
+
+        subject_dict = {
+            "subject_name": subject_name,
+            "subject_code": subject_code,
+            "credits": credits,
+            "dept": dept,
+            "course": course,
+            "branch": branch,
+            "semester": semester,
+        }
+
+        serializer = SubjectSerializer(data=subject_dict)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            errors.append(serializer.errors)
+
+    if errors:
+        return Response(errors, status=400)
+
+    return Response({"message": "Subjects added successfully."}, status=201)
 
 
 @api_view(["PUT"])
