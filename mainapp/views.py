@@ -70,14 +70,26 @@ def getRooms(request):
 @api_view(["POST"])
 def addRoom(request):
     """
-    Add a new room.
+    Add one or multiple rooms.
     """
-    serializer = RoomSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
-    else:
-        return Response(serializer.errors, status=400)
+    data = request.data if isinstance(request.data, list) else [request.data]
+    added_rooms = []
+    errors = []
+
+    for room_data in data:
+        serializer = RoomSerializer(data=room_data)
+        if serializer.is_valid():
+            serializer.save()
+            added_rooms.append(serializer.data)
+        else:
+            errors.append({"room_data": room_data, "errors": serializer.errors})
+
+    if errors:
+        return Response(
+            {"added_rooms": added_rooms, "errors": errors},
+            status=400 if not added_rooms else 207,
+        )
+    return Response(added_rooms, status=201)
 
 
 @api_view(["PUT"])
