@@ -66,7 +66,6 @@ class TimeTableGeneration:
 
             # Cycle through weekdays if there are more sections than weekdays
             week_day = self.weekdays[i % len(self.weekdays)]  # Ensure it wraps around
-
             for slot_index in range(1, total_slots_for_section + 1):
                 current_time_slot = self.available_time_slots.get(slot_index)
                 if any(schedule_item["time_slot"] == current_time_slot for schedule_item in section_schedule):
@@ -75,6 +74,7 @@ class TimeTableGeneration:
                 available_subjects_for_slot = list(self.subject_teacher_mapping.keys())
                 selected_subject, assigned_teacher = None, None
                 is_lab_subject = False
+                is_special_subject=False
 
                 while available_subjects_for_slot:
                     selected_subject = random.choice(available_subjects_for_slot)
@@ -89,12 +89,12 @@ class TimeTableGeneration:
                         available_subjects_for_slot.remove(selected_subject)
                         continue
                     is_lab_subject = selected_subject in self.lab_subject_list
-
+                
                     # Restrict special subjects to specific slots
-                    if selected_subject in self.special_subject_list and slot_index not in [1, 3, 5]:
+                    if selected_subject in self.special_subject_list and slot_index not in [5]:
                         available_subjects_for_slot.remove(selected_subject)
                         continue
-
+                    is_special_subject=selected_subject in self.lab_subject_list
                     # Assign teacher if subject is not already scheduled today
                     if selected_subject not in subjects_scheduled_today:
                         teacher_iterator = subject_teacher_tracker[selected_subject]
@@ -125,7 +125,7 @@ class TimeTableGeneration:
                 assigned_room = random.choice(self.lab_classrooms) if is_lab_subject else assigned_classroom
 
                 # Handle double-slot allocation for labs
-                if is_lab_subject and slot_index + 1 <= total_slots_for_section:
+                if is_lab_subject or is_special_subject and slot_index + 1 <= total_slots_for_section:
                     next_time_slot = self.available_time_slots.get(slot_index + 1)
                     section_schedule.append({
                         "teacher_id": assigned_teacher,
