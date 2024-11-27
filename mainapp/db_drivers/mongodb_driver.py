@@ -50,6 +50,11 @@ class MongoDriver:
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
+    def delete_many(self, collection_name, filter):
+            collection = self.db[collection_name]
+            result = collection.delete_many(filter)
+            return result.deleted_count
+
     def insert_one(self, collection_name, document):
         collection = self.get_collection(collection_name)
         return collection.insert_one(document)
@@ -58,8 +63,10 @@ class MongoDriver:
         collection = self.get_collection(collection_name)
         return collection.find(query)
 
-    def update_one(self, collection_name, query, update):
+    def update_one(self, collection_name, query, update, array_filters=None):
         collection = self.get_collection(collection_name)
+        if array_filters:
+            return collection.update_one(query, update, array_filters=array_filters)
         return collection.update_one(query, update)
 
     def delete_one(self, collection_name, query):
