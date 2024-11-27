@@ -150,19 +150,28 @@ def addTeacher(request):
     Add a new teacher and map the preferred subjects to the teacher.
     """
     teacher_data = request.data
-    existing_teacher = Teacher.objects.filter(email=teacher_data.get("email")).first()
 
+    existing_teacher = Teacher.objects.filter(email=teacher_data.get("email")).first()
     if existing_teacher:
         return Response(
             {"error": "Teacher with this email already exists."}, status=400
         )
+
+    name = teacher_data.get("name")
+    if not name:
+        return Response({"error": "Teacher name is required."}, status=400)
+
+    initials = "".join([part[0].upper() for part in name.split() if part])
+    next_number = Teacher.objects.count() + 1
+    teacher_code = f"{initials}{next_number:03}"
+
+    teacher_data["teacher_code"] = teacher_code
 
     serializer = TeacherSerializer(data=teacher_data)
     if serializer.is_valid():
         teacher = serializer.save()
 
         preferred_subjects = request.data.get("preferred_subjects", [])
-
         for subject_name in preferred_subjects:
             subject = Subject.objects.filter(subject_name=subject_name).first()
             if subject:

@@ -3,14 +3,15 @@ from django.db import models
 
 class Teacher(models.Model):
     phone = models.CharField(max_length=15)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=50)
     designation = models.CharField(max_length=50)
     working_days = models.CharField(max_length=100)
+    teacher_code = models.CharField(max_length=10, unique=True, null=False)
 
     def __str__(self):
-        return f"{self.name} ({self.designation}, {self.department})"
+        return f"{self.name} ({self.teacher_code}) - {self.department}"
 
 
 class Subject(models.Model):
