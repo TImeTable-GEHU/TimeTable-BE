@@ -54,7 +54,7 @@ class TimeTableGeneration:
                     sorted_classrooms.remove(classroom)
                     break
             else:
-                raise ValueError(f"No classroom can accommodate section {section.name} with strength {self.room_capacity_manager.section_strength[section]}.")
+                raise ValueError(f"No classroom can accommodate section {section} with strength {self.room_capacity_manager.section_strength[section]}.")
 
         self.weekly_workload = teacher_weekly_workload
 
