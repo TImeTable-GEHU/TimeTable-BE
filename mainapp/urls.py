@@ -35,6 +35,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # check connection
     path("mongo-status/", mongo_status, name="mongo-status"),
     path("postgres-status/", postgres_status, name="postgres-status"),
     # room's apis

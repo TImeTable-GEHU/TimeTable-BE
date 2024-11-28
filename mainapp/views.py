@@ -111,6 +111,19 @@ def updateRoom(request, pk):
     """
     try:
         room = Room.objects.get(id=pk)
+
+        new_room_code = request.data.get("room_code")
+        if (
+            new_room_code
+            and Room.objects.filter(room_code=new_room_code).exclude(id=pk).exists()
+        ):
+            return Response(
+                {
+                    "error": f"Room code '{new_room_code}' is already assigned to another room."
+                },
+                status=400,
+            )
+
         serializer = RoomSerializer(instance=room, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -357,6 +370,20 @@ def updateSubject(request, pk):
         subject = Subject.objects.get(id=pk)
     except Subject.DoesNotExist:
         return Response({"error": "Subject not found"}, status=404)
+
+    new_subject_code = request.data.get("subject_code")
+    if (
+        new_subject_code
+        and Subject.objects.filter(subject_code=new_subject_code)
+        .exclude(id=pk)
+        .exists()
+    ):
+        return Response(
+            {
+                "error": f"Subject code '{new_subject_code}' is already assigned to another subject."
+            },
+            status=400,
+        )
 
     serializer = SubjectSerializer(instance=subject, data=request.data, partial=True)
     if serializer.is_valid():
