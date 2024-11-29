@@ -31,7 +31,7 @@ class TimeTableSelection:
         )
 
         selected_fitness = {**top_selected, **roulette_selected}
-        self.display_selected_chromosomes(selected_fitness)
+        # self.display_selected_chromosomes(selected_fitness)
         return selected_fitness
 
 
