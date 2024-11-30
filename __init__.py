@@ -32,20 +32,20 @@ def timetable_generation():
     )
 
     timetable = timetable_generator.create_timetable(Defaults.initial_no_of_chromosomes)
-
-
+    from icecream import ic
+    ic(timetable)
     # Fitness of each Chromosome
     fitness_calculator = TimetableFitnessEvaluator(
         timetable,
-        timetable.sections_manager.sections,
+        timetable_generator.sections_manager.sections,
         SubjectTeacherMap.subject_teacher_map,
-        timetable.classrooms_manager.classrooms,
-        timetable.classrooms_manager.labs,
-        timetable.room_capacity_manager.room_capacity,
-        timetable.room_capacity_manager.section_strength,
-        timetable.subject_quota_limits,
-        timetable.teacher_availability_preferences,
-        timetable.weekly_workload,
+        timetable_generator.classrooms_manager.classrooms,
+        timetable_generator.classrooms_manager.labs,
+        timetable_generator.room_capacity_manager.room_capacity,
+        timetable_generator.room_capacity_manager.section_strength,
+        timetable_generator.subject_quota_limits,
+        timetable_generator.teacher_availability_preferences,
+        timetable_generator.weekly_workload,
     )
 
     fitness_scores = fitness_calculator.evaluate_timetable_fitness()
@@ -54,7 +54,7 @@ def timetable_generation():
     # Selection of all Chromosomes
     selection_object = TimeTableSelection()
     selected_chromosomes = selection_object.select_chromosomes(fitness_scores[1])
-
+    ic(len(selected_chromosomes))
 
     # Crossover for all selected Chromosomes
     crossover_object = TimeTableCrossOver()
@@ -65,22 +65,36 @@ def timetable_generation():
         if i + 1 < len(selected_chromosome_keys):
             parent1 = selected_chromosome_keys[i]
             parent2 = selected_chromosome_keys[i + 1]
-            child1, child2 = crossover_object.perform_crossover(timetable[parent1], timetable[parent2])
+            child1, child2 = crossover_object.perform_crossover(
+                timetable[parent1],
+                timetable[parent2]
+            )
+
             crossover_chromosomes.append(child1)
             crossover_chromosomes.append(child2)
 
 
     # Mutate all crossover Chromosomes
     mutation_object = TimeTableMutation()
-    mutated_chromosomes = [mutation_object.mutate_schedule_for_week(chromosome) for chromosome in crossover_chromosomes]
+    mutated_chromosomes = [
+        mutation_object.mutate_schedule_for_week(chromosome)
+        for chromosome in crossover_chromosomes
+    ]
+
+
     ic(mutated_chromosomes)
+    ic(selected_chromosomes)
 
-
+    ic(selected_chromosomes)
     # Store best of Chromosomes
-    best_chromosome = max(
-        mutated_chromosomes,
-        key=lambda x: fitness_scores[0][x]
-    )
+    best_chromosome_score = -1
+    best_chromosome = dict()
+
+    for week_no, week_score in selected_chromosomes.items():
+        if int(week_score) > best_chromosome_score:
+            best_chromosome_score = int(week_score)
+            best_chromosome = timetable[week_no]
+
     ic(f"Best Chromosome: {best_chromosome}")
 
 
