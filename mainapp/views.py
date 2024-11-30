@@ -1,6 +1,9 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
@@ -160,7 +163,7 @@ def getTeachers(request):
 @api_view(["POST"])
 def addTeacher(request):
     """
-    Add a new teacher and map the preferred subjects to the teacher.
+    Add a new teacher, map the preferred subjects to the teacher, and send a confirmation email.
     """
     teacher_data = request.data
 
@@ -179,6 +182,29 @@ def addTeacher(request):
             subject = Subject.objects.filter(subject_name=subject_name).first()
             if subject:
                 TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
+
+        email_subject = "Confirmation: Details Submitted"
+        email_body = render_to_string(
+            "emails/teacher_confirmation_email.html",
+            {
+                "teacher_name": teacher.name,
+                "preferred_subjects": preferred_subjects,
+            },
+        )
+
+        try:
+            send_mail(
+                email_subject,
+                email_body,
+                settings.EMAIL_HOST_USER,
+                [teacher.email],
+                fail_silently=False,
+                html_message=email_body,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to send confirmation email: {str(e)}"}, status=500
+            )
 
         return Response(serializer.data, status=201)
     else:
@@ -201,9 +227,7 @@ def updateTeacher(request, pk):
 
             if "preferred_subjects" in request.data:
                 preferred_subjects = request.data["preferred_subjects"]
-                # Clear existing preferred subjects
                 TeacherSubject.objects.filter(teacher_id=teacher).delete()
-                # Map the teacher to the new preferred subjects
                 for subject_name in preferred_subjects:
                     try:
                         subject = Subject.objects.get(subject_name=subject_name)
@@ -253,7 +277,7 @@ def getFilteredSubjects(request):
     """
     dept = request.GET.get("dept")
     course = request.GET.get("course")
-    branch = request.GET.get("branch", "")  # Default to an empty string
+    branch = request.GET.get("branch", "")
     semester = request.GET.get("semester")
 
     if not all([dept, course, semester]):
@@ -267,7 +291,7 @@ def getFilteredSubjects(request):
         "course": course,
         "semester": semester,
     }
-    if branch:  # Add branch to filters only if it's provided
+    if branch:
         filters["branch"] = branch
 
     subjects = Subject.objects.filter(**filters)
