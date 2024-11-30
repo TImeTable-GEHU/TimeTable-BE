@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -14,7 +15,8 @@ SECRET_KEY = "django-insecure-_z08bl^02re7fpkx-f4k%46=mcd$fczddsesh0(yk_!%x@vca3
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    # "http://127.0.0.1",
+    "127.0.0.1",
+    "localhost",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -31,10 +33,28 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
     "mainapp",
     "drf_yasg",
     "corsheaders",
 ]
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",  # Make sure only authenticated users can access APIs
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Access token expiration
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # Refresh token expiration
+    "ROTATE_REFRESH_TOKENS": False,  # Use one refresh token per user
+    "BLACKLIST_AFTER_ROTATION": False,  # Optionally blacklist used refresh tokens
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
@@ -12,6 +14,7 @@ import os
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])  # Require authentication
 def generate_timetable(request):
     """
     Generate a timetable using the provided data.
@@ -26,6 +29,7 @@ def generate_timetable(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])  # Override global permission
 def mongo_status(request):
     """
     Check MongoDB connection status.
@@ -39,6 +43,7 @@ def mongo_status(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def postgres_status(request):
     """
     Check PostgreSQL connection status.
@@ -61,6 +66,7 @@ def postgres_status(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getRooms(request):
     """
     Retrieve a list of all rooms.
@@ -71,6 +77,7 @@ def getRooms(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def addRoom(request):
     """
     Add one or multiple rooms.
@@ -108,6 +115,7 @@ def addRoom(request):
 
 
 @api_view(["PUT"])
+@permission_classes([IsAuthenticated])
 def updateRoom(request, pk):
     """
     Update an existing room by ID.
@@ -138,6 +146,7 @@ def updateRoom(request, pk):
 
 
 @api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
 def deleteRoom(request, pk):
     """
     Delete a room by ID.
@@ -151,6 +160,7 @@ def deleteRoom(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def getTeachers(request):
     """
     Retrieve a list of all teachers along with their preferred subjects.
@@ -161,6 +171,7 @@ def getTeachers(request):
 
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def addTeacher(request):
     """
     Add a new teacher, map the preferred subjects to the teacher, and send a confirmation email.
@@ -206,12 +217,16 @@ def addTeacher(request):
                 {"error": f"Failed to send confirmation email: {str(e)}"}, status=500
             )
 
-        return Response(serializer.data, status=201)
+        return Response(
+            {"message": "Teacher added successfully.", "data": serializer.data},
+            status=201,
+        )
     else:
         return Response(serializer.errors, status=400)
 
 
 @api_view(["PUT"])
+@permission_classes([AllowAny])
 def updateTeacher(request, pk):
     """
     Update an existing teacher's detail by ID, including preferred subjects.
@@ -248,6 +263,7 @@ def updateTeacher(request, pk):
 
 
 @api_view(["DELETE"])
+@permission_classes([AllowAny])
 def deleteTeacher(request, pk):
     """
     Delete a teacher by ID.
@@ -261,6 +277,7 @@ def deleteTeacher(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def getAllSubjects(request):
     """
     Retrieve a list of all subjects.
@@ -271,6 +288,7 @@ def getAllSubjects(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getFilteredSubjects(request):
     """
     Retrieve subjects based on department, course, branch, and semester.
@@ -300,6 +318,7 @@ def getFilteredSubjects(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def addSubject(request):
     """
     Add one or multiple subjects to a specific dept, course, branch, and semester.
@@ -376,6 +395,7 @@ def addSubject(request):
 
 
 @api_view(["PUT"])
+@permission_classes([IsAuthenticated])
 def updateSubject(request, pk):
     """
     Update an existing subject by ID.
@@ -408,6 +428,7 @@ def updateSubject(request, pk):
 
 
 @api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
 def deleteSubject(request, pk):
     """
     Delete a subject by ID.
