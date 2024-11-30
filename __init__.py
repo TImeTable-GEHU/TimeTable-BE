@@ -10,7 +10,9 @@ from Samples.samples import (
     TeacherWorkload,
     SpecialSubjects,
     SubjectWeeklyQuota,
-    Classrooms
+    Classrooms,
+    Sections,
+    
 )
 
 
@@ -26,6 +28,7 @@ def timetable_generation():
         special_subjects=SpecialSubjects.special_subjects,
         subject_quota_limits=SubjectWeeklyQuota.subject_quota,
         labs_list=Classrooms.labs,
+        teacher_duty_days=TeacherWorkload.teacher_duty_days,
     )
 
     timetable = timetable_generator.create_timetable(Defaults.initial_no_of_chromosomes)
@@ -34,21 +37,18 @@ def timetable_generation():
     # Fitness of each Chromosome
     fitness_calculator = TimetableFitnessEvaluator(
         timetable,
-        timetable_generator.sections,
+        timetable.sections_manager.sections,
         SubjectTeacherMap.subject_teacher_map,
-        timetable_generator.classrooms,
-        timetable_generator.lab_classrooms,
-        timetable_generator.room_capacity,
-        timetable_generator.section_strength,
-        SubjectWeeklyQuota.subject_quota,
-        timetable_generator.teacher_availability_preferences,
-        timetable_generator.weekly_workload,
-        Defaults.working_days
+        timetable.classrooms_manager.classrooms,
+        timetable.classrooms_manager.labs,
+        timetable.room_capacity_manager.room_capacity,
+        timetable.room_capacity_manager.section_strength,
+        timetable.subject_quota_limits,
+        timetable.teacher_availability_preferences,
+        timetable.weekly_workload,
     )
 
     fitness_scores = fitness_calculator.evaluate_timetable_fitness()
-    from icecream import ic
-    ic(fitness_scores)
 
 
     # Selection of all Chromosomes
