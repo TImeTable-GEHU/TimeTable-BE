@@ -1,167 +1,92 @@
-from rest_framework.response import Response
-from ..db_drivers.mongodb_driver import MongoDriver
+# views.py
 from rest_framework.decorators import api_view
-import json
+from rest_framework import status
 from datetime import datetime
-from bson import ObjectId
+from ..db_drivers.mongodb_driver import MongoDriver
+from .serializers import TimetableSerializer
+from django.http import JsonResponse
 
+# Initialize MongoDB driver
 mongo_driver = MongoDriver()
 
+@api_view(['POST'])
+def updateTimeTable(request):
+    """
+    Replace the current timetable and archive the old version.
+    """
+    # Validate incoming data
+    serializer = TimetableSerializer(data=request.data)
+    if not serializer.is_valid():
+        return JsonResponse({"error": "Invalid data", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-def convert_objectid(document):
-    if isinstance(document, list):
-        return [convert_objectid(item) for item in document]
-    elif isinstance(document, dict):
-        return {key: convert_objectid(value) for key, value in document.items()}
-    elif isinstance(document, ObjectId):
-        return str(document)
-    else:
-        return document
+    data = serializer.validated_data
+    course_id = data["course_id"]
+    semester = data["semester"]
+    timetable = data["timetable"]
+    chromosome = data["chromosome"]
 
-@api_view(['GET'])
-def getCurrentTimeTable(request):
-    try:
-        query = request.query_params.get("query", "{}")
-        query = json.loads(query)
-        documents = list(mongo_driver.find("currentTimeTable", query))
-        for doc in documents:
-            doc["_id"] = str(doc["_id"])  # Convert ObjectId to string
-        return Response(documents, status=200)
-    except Exception as e:
-        return Response({"error": str(e)}, status=400)
+    current_collection = "current_timetable"
+    historical_collection = "historical_timetable"
 
+    # Define query for the specific timetable
+    query = {"course_id": course_id, "semester": semester}
 
-@api_view(['GET'])
-def getHistoricalTimeTable(request):
-    try:
-        # Parse the query parameter
-        query = request.query_params.get("query", "{}")
-        query = json.loads(query)
+    # Fetch the current timetable
+    current_timetable = list(mongo_driver.find(current_collection, query))
 
-        # Fetch documents from MongoDB
-        documents = list(mongo_driver.find("historical_timetables", query))
-
-        # Convert all ObjectId fields to strings
-        documents = convert_objectid(documents)
-
-        # Return the documents as a JSON response
-        return Response(documents, status=200)
-    except json.JSONDecodeError:
-        return Response({"error": "Invalid JSON in query parameter"}, status=400)
-    except Exception as e:
-        return Response({"error": str(e)}, status=400)
-
-
-def save_chromosome(course_name, branch_name, semester_name, chromosome, mongo_driver):
-    # Query to find the course
-    query = {"course.name": course_name}
-    course_cursor = mongo_driver.find("currentTimeTable", query)
-    course_document = next(course_cursor, None)
-
-    if not course_document:
-        # Create a new course structure if not exists
-        new_course = {
-            "course": [
-                {
-                    "name": course_name,
-                    "branches": [
-                        {
-                            "name": branch_name,
-                            "semesters": [
-                                {"name": semester_name, "chromosome": chromosome}
-                            ]
-                        }
-                    ]
-                }
-            ]
+    # If exists, move current timetable to historical and delete it from current_timetable
+    if current_timetable:
+        current_timetable = current_timetable[0]  # Assuming one timetable per course/semester
+        historical_entry = {
+            **current_timetable,
+            "updated_at": datetime.utcnow().isoformat()  # Add timestamp
         }
-        mongo_driver.insert_one("currentTimeTable", new_course)
-        print(f"New course '{course_name}' with branch '{branch_name}' and semester '{semester_name}' added.")
-    else:
-        # Ensure branches and semesters exist before updating
-        updated = False
-        for course_entry in course_document["course"]:
-            if course_entry["name"] == course_name:
-                if "branches" not in course_entry:
-                    course_entry["branches"] = []
-                for branch in course_entry["branches"]:
-                    if branch["name"] == branch_name:
-                        if "semesters" not in branch:
-                            branch["semesters"] = []
-                        for semester in branch["semesters"]:
-                            if semester["name"] == semester_name:
-                                semester["chromosome"] = chromosome  # Update existing semester
-                                updated = True
-                                break
-                        if not updated:
-                            branch["semesters"].append({"name": semester_name, "chromosome": chromosome})
-                            updated = True
-                        break
-                if not updated:
-                    course_entry["branches"].append({
-                        "name": branch_name,
-                        "semesters": [{"name": semester_name, "chromosome": chromosome}]
-                    })
-                    updated = True
-                break
+        del historical_entry["_id"]  # Remove MongoDB ID for insertion
+        mongo_driver.insert_one(historical_collection, historical_entry)
+        mongo_driver.delete_one(current_collection, query)  # Remove old timetable
 
-        if updated:
-            mongo_driver.update_one(
-                "currentTimeTable",
-                query,
-                {"$set": {"course": course_document["course"]}}
-            )
-            print(f"Chromosome updated for course '{course_name}', branch '{branch_name}', semester '{semester_name}'.")
-        else:
-            print(f"Failed to update chromosome for course '{course_name}'.")
-
-
-def archive_current_timetable(mongo_driver):
-    current_timetables = list(mongo_driver.find("currentTimeTable", {}))  # Fetch all documents
-
-    if not current_timetables:
-        print("No current timetables found to archive.")
-        return
-
-    for document in current_timetables:
-        document.pop("_id", None)
-
-    historical_entry = {
-        "timestamp": datetime.now().isoformat(),  # Add a timestamp for versioning
-        "timetables": current_timetables
+    # Insert the new timetable
+    new_timetable_entry = {
+        "course_id": course_id,
+        "semester": semester,
+        "timetable": timetable,
+        "chromosome": chromosome,
+        "last_updated": datetime.utcnow().isoformat()  # Add last updated timestamp
     }
+    mongo_driver.insert_one(current_collection, new_timetable_entry)
 
-    mongo_driver.insert_one("historical_timetables", historical_entry)
-    print("Archived the current timetable state to historical timetables.")
+    return JsonResponse({"message": "Timetable updated successfully"}, status=status.HTTP_200_OK)
 
-    # Step 3: Optionally clear the current timetable collection
-    mongo_driver.delete_many("currentTimeTable", {})  # Clear all documents
-    print("Cleared the current timetable collection.")
 
-if __name__=="__main__":
-    save_chromosome(
-        course_name="Computer Science",
-        branch_name="AI",
-        semester_name="sem1",
-        chromosome={"gene": [1, 0, 1, 1], "fitness": 0.95},
-        mongo_driver=mongo_driver
-    )
+@api_view(['GET'])
+def getCurrentTimeTable(request, course_id, semester):
+    """
+    Fetch the current timetable for a given course and semester.
+    """
+    query = {"course_id": course_id, "semester": semester}
+    current_timetable = list(mongo_driver.find("current_timetable", query))
 
-    save_chromosome(
-        course_name="Computer Science",
-        branch_name="AI",
-        semester_name="sem2",
-        chromosome={"gene": [0, 1, 0, 1], "fitness": 0.85},
-        mongo_driver=mongo_driver
-    )
+    if not current_timetable:
+        return JsonResponse({"error": "Current timetable not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    save_chromosome(
-        course_name="Electronics",
-        branch_name="VLSI",
-        semester_name="sem1",
-        chromosome={"gene": [1, 1, 1, 0], "fitness": 0.90},
-        mongo_driver=mongo_driver
-    )
-    archive_current_timetable(
-        mongo_driver=mongo_driver
-    )
+    # Convert ObjectId to string in the current timetable
+    for timetable in current_timetable:
+        timetable["_id"] = str(timetable["_id"])  # Convert ObjectId to string
+
+    return JsonResponse(current_timetable[0], safe=False, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def getHistoricalTimeTable(request, course_id, semester):
+    """
+    Fetch the historical timetables for a given course and semester.
+    """
+    query = {"course_id": course_id, "semester": semester}
+    historical_timetables = list(mongo_driver.find("historical_timetable", query))
+
+    if not historical_timetables:
+        return JsonResponse({"error": "No historical timetables found"}, status=status.HTTP_404_NOT_FOUND)
+
+    for timetable in historical_timetables:
+        timetable["_id"] = str(timetable["_id"])  # Convert ObjectId to string
+
+    return JsonResponse(historical_timetables, safe=False, status=status.HTTP_200_OK)
