@@ -1,9 +1,8 @@
 from samples import SubjectTeacherMap, WorkingDays, SampleChromosome
 
-
 class TeacherTimetable:
     def __init__(self):
-        
+        # Creating timetable for each teacher
         self.teacher_timetable = {
             teacher: {day: [] for day in WorkingDays.days} 
             for teachers in SubjectTeacherMap.subject_teacher_map.values()  # Iterate over list of teachers
@@ -43,8 +42,6 @@ class TeacherTimetable:
                 for class_entry in classes:
                     print(f"    {class_entry['course']} - Section: {class_entry['section']}, Subject: {class_entry['subject_id']}, Time: {class_entry['time_slot']}, Classroom: {class_entry['classroom_id']}")
 
-
-# Main Code
 if __name__ == "__main__":
     # Initialize timetable
     teacher_timetable = TeacherTimetable()
@@ -52,10 +49,9 @@ if __name__ == "__main__":
     # Generate timetable from the sample chromosome
     w = {
         "Week 1": SampleChromosome.schedule1,
-        "Week 2": SampleChromosome.schedule2
+        "Week 2": SampleChromosome.schedule1
     }
     teacher_timetable.generate_teacher_timetable(w)
-    
-    # Display the teacher-specific timetable
+
     teacher_timetable.display_timetable()                
 
