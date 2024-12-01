@@ -1,4 +1,4 @@
-from samples import SubjectTeacherMap, WorkingDays, SampleChromosome
+from Samples.samples import SubjectTeacherMap, WorkingDays, SampleChromosome
 
 class TeacherTimetable:
     def __init__(self):
