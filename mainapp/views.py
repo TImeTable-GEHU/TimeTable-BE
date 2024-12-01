@@ -178,7 +178,10 @@ def addTeacher(request):
     """
     teacher_data = request.data
 
-    existing_teacher = Teacher.objects.filter(email=teacher_data.get("email")).first()
+    email = teacher_data.get("email", "").strip().lower()
+    teacher_data["email"] = email
+
+    existing_teacher = Teacher.objects.filter(email=email).first()
     if existing_teacher:
         return Response(
             {"error": "Teacher with this email already exists."}, status=400
