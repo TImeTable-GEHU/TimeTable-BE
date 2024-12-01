@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="TimeTableLib",
-    packages=find_packages(include=["managers", "managers.common"]),
+    packages=find_packages(include=["GA", "Samples"]),
     version="v0.1.0",
     description="This Library generates timetable and is a plug and play solution for any python based backend service.",
     long_description=open("README.md").read(),
