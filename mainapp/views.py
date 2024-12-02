@@ -10,10 +10,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
-from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
+from .serializers import ExcelFileUploadSerializer, RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
 from GA.__init__ import run_timetable_generation
 import json
+import pandas as pd
 
 def generateTimetable():
     output = run_timetable_generation()
@@ -482,3 +483,21 @@ def addStudent(
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def addStudentAPI(request):
+    """
+    Add a new student.
+    """
+    serializer = ExcelFileUploadSerializer(data=request.data)
+    if serializer.is_valid():
+        excel_file = serializer.validated_data['file']
+        # Handle the Excel file using pandas
+        try:
+            data = pd.read_excel(excel_file)
+            # Process your data here (e.g., save it to the database)
+            return Response({"message": "File processed successfully", "data": data.to_dict()}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+    return Response(serializer.errors, status=400)

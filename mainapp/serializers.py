@@ -33,3 +33,6 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = "__all__"
+
+class ExcelFileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
