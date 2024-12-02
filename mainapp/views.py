@@ -20,7 +20,7 @@ def generateTimetable():
     return output
 
 @api_view(["POST"])
-@permission_classes([AllowAny])  # Require authentication
+@permission_classes([IsAuthenticated])  # Require authentication
 def generate_timetable(request):
     """
     Generate a timetable using the provided data.
