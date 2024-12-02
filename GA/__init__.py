@@ -105,4 +105,5 @@ def run_timetable_generation():
     return best_chromosome
 
 
-print(run_timetable_generation())
+if __name__ == "__main__":
+    print(run_timetable_generation())
