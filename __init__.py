@@ -12,7 +12,7 @@ from Samples.samples import (
     SubjectWeeklyQuota,
     Classrooms,
     Sections,
-    
+
 )
 
 
@@ -102,6 +102,3 @@ def run_timetable_generation():
     for generation in range(Defaults.total_no_of_generations):
         best_chromosome = timetable_generation()
     return best_chromosome
-
-
-run_timetable_generation()
