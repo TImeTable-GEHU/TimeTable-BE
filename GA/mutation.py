@@ -83,6 +83,6 @@ class TimeTableCrossOver:
         # Perform the crossover between week1 and week2
         for day in crossover_days:
             if day in (timetable1, timetable2):
-                timetable1[day], timetable2[day] = timetable1[day], timetable1[day]
+                timetable1[day], timetable2[day] = timetable2[day], timetable1[day]
 
         return timetable1, timetable2
