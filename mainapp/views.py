@@ -488,16 +488,43 @@ def addStudent(
 @permission_classes([IsAuthenticated])
 def addStudentAPI(request):
     """
-    Add a new student.
+    Add multiple students from an Excel file.
     """
     serializer = ExcelFileUploadSerializer(data=request.data)
     if serializer.is_valid():
         excel_file = serializer.validated_data['file']
-        # Handle the Excel file using pandas
+
         try:
+            # Read the Excel file into a pandas DataFrame
             data = pd.read_excel(excel_file)
-            # Process your data here (e.g., save it to the database)
-            return Response({"message": "File processed successfully", "data": data.to_dict()}, status=200)
+
+            # Validate and process each row
+            for index, row in data.iterrows():
+                student_data = {
+                    "student_name": row.get("student_name"),
+                    "student_id": row.get("student_id"),
+                    "is_hosteller": row.get("is_hosteller"),
+                    "location": row.get("location"),
+                    "dept": row.get("dept"),
+                    "course": row.get("course"),
+                    "branch": row.get("branch"),
+                    "semester": row.get("semester"),
+                    "section": row.get("section"),
+                    "cgpa": row.get("cgpa"),
+                }
+
+                # Call addStudent for each row
+                result = addStudent(**student_data)
+                if result['status'] != "success":
+                    # Handle any errors for specific rows
+                    return Response(
+                        {"message": f"Error in row {index}: {result['message']}"},
+                        status=400,
+                    )
+
+            return Response({"message": "All students added successfully"}, status=200)
+
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
     return Response(serializer.errors, status=400)
