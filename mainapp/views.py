@@ -10,10 +10,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
-from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
+from .serializers import ExcelFileUploadSerializer, RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
 from GA.__init__ import run_timetable_generation
+from Constants.section_allocation import StudentScorer
 import json
+import pandas as pd
 
 def generateTimetable():
     output = run_timetable_generation()
@@ -482,3 +484,49 @@ def addStudent(
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def addStudentAPI(request):
+    """
+    Add multiple students from an Excel file.
+    """
+    serializer = ExcelFileUploadSerializer(data=request.data)
+    if serializer.is_valid():
+        excel_file = serializer.validated_data['file']
+
+        try:
+            # Read the Excel file into a pandas DataFrame
+            data = pd.read_excel(excel_file)
+            data_dict = data.to_dict(orient="records")
+            data = StudentScorer(data_dict).entry_point_for_section_divide()
+            # Validate and process each row
+            for index, row in enumerate(data):
+                student_data = {
+                    "student_name": row.get("student_name"),
+                    "student_id": row.get("student_id"),
+                    "is_hosteller": row.get("is_hosteller"),
+                    "location": row.get("location"),
+                    "dept": row.get("dept"),
+                    "course": row.get("course"),
+                    "branch": row.get("branch"),
+                    "semester": row.get("semester"),
+                    "section": row.get("section"),
+                    "cgpa": row.get("cgpa"),
+                }
+
+                # Call addStudent for each row
+                result = addStudent(**student_data)
+                if result['status'] != "success":
+                    # Handle any errors for specific rows
+                    return Response(
+                        {"message": f"Error in row {index}: {result['message']}"},
+                        status=400,
+                    )
+
+            return Response({"message": "All students added successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+    return Response(serializer.errors, status=400)
