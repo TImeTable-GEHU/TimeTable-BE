@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from pygments.token import String
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.mail import send_mail
@@ -11,7 +12,12 @@ from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
 from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
+from GA.__init__ import run_timetable_generation
+import json
 
+def generateTimetable():
+    output = run_timetable_generation()
+    return output
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  # Require authentication
@@ -20,13 +26,12 @@ def generate_timetable(request):
     Generate a timetable using the provided data.
     """
     try:
-        # generateTimetable()
-        return Response({"message": "Timetable generated successfully"}, status=200)
+        timetable = generateTimetable()
+        return Response(timetable, status=200)
     except Exception as e:
         return Response(
             {"error": f"Failed to generate timetable: {str(e)}"}, status=500
         )
-
 
 @api_view(["GET"])
 @permission_classes([AllowAny])  # Override global permission
@@ -40,6 +45,7 @@ def mongo_status(request):
         return JsonResponse({"mongodb": "Connected", "collections": collections})
     except Exception as e:
         return JsonResponse({"mongodb": "Not Connected", "error": str(e)})
+
 
 
 @api_view(["GET"])
