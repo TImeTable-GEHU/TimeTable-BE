@@ -32,8 +32,6 @@ def timetable_generation():
     )
 
     timetable = timetable_generator.create_timetable(Defaults.initial_no_of_chromosomes)
-    from icecream import ic
-    ic(timetable)
     # Fitness of each Chromosome
     fitness_calculator = TimetableFitnessEvaluator(
         timetable,
@@ -54,7 +52,6 @@ def timetable_generation():
     # Selection of all Chromosomes
     selection_object = TimeTableSelection()
     selected_chromosomes = selection_object.select_chromosomes(fitness_scores[1])
-    ic(len(selected_chromosomes))
 
     # Crossover for all selected Chromosomes
     crossover_object = TimeTableCrossOver()
@@ -80,13 +77,6 @@ def timetable_generation():
         mutation_object.mutate_schedule_for_week(chromosome)
         for chromosome in crossover_chromosomes
     ]
-
-
-    ic(mutated_chromosomes)
-    ic(selected_chromosomes)
-
-    ic(selected_chromosomes)
-    # Store best of Chromosomes
     best_chromosome_score = -1
     best_chromosome = dict()
 
@@ -94,8 +84,6 @@ def timetable_generation():
         if int(week_score) > best_chromosome_score:
             best_chromosome_score = int(week_score)
             best_chromosome = timetable[week_no]
-
-    ic(f"Best Chromosome: {best_chromosome}")
     return best_chromosome
 
 
@@ -104,6 +92,4 @@ def run_timetable_generation():
         best_chromosome = timetable_generation()
     return best_chromosome
 
-
-if __name__ == "__main__":
-    print(run_timetable_generation())
+run_timetable_generation()
