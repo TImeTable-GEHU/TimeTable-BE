@@ -13,6 +13,7 @@ from .models import Room, Teacher, Subject, TeacherSubject, Student
 from .serializers import ExcelFileUploadSerializer, RoomSerializer, TeacherSerializer, SubjectSerializer
 import os
 from GA.__init__ import run_timetable_generation
+from Constants.section_allocation import StudentScorer
 import json
 import pandas as pd
 
@@ -497,9 +498,10 @@ def addStudentAPI(request):
         try:
             # Read the Excel file into a pandas DataFrame
             data = pd.read_excel(excel_file)
-
+            data_dict = data.to_dict(orient="records")
+            data = StudentScorer(data_dict).entry_point_for_section_divide()
             # Validate and process each row
-            for index, row in data.iterrows():
+            for index, row in enumerate(data):
                 student_data = {
                     "student_name": row.get("student_name"),
                     "student_id": row.get("student_id"),
