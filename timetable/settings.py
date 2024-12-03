@@ -14,18 +14,20 @@ SECRET_KEY = "django-insecure-_z08bl^02re7fpkx-f4k%46=mcd$fczddsesh0(yk_!%x@vca3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-]
+ALLOWED_HOSTS = ["192.168.43.161", "192.168.5.29", "127.0.0.1"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",  # Frontend origin
+    "http://127.0.0.1:5500",
+    "http://192.168.43.161:5500",
+    "http://192.168.5.29:5500",
 ]
+
+# CORS_ALLOW_ALL_ORIGINS = False
 
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -36,7 +38,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "mainapp",
     "drf_yasg",
-    "corsheaders",
 ]
 
 # REST Framework Settings
@@ -44,9 +45,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",  # Make sure only authenticated users can access APIs
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
 SIMPLE_JWT = {
@@ -57,6 +56,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -64,7 +64,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "timetable.urls"
