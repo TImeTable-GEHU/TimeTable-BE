@@ -19,7 +19,7 @@ Ensure you have the following installed:
 - Python 3.8+  
 - pip  
 - A virtual environment tool (e.g., `venv`)  
-- A database system (SQLite, PostgreSQL, or MySQL)  
+- Database system (MongoDB and PostgreSQL)  
 
 ### Steps
 1. **Clone the Repository**:
@@ -41,7 +41,6 @@ Ensure you have the following installed:
 
 4. **Configure Database**:
    - Update the `DATABASES` setting in `timetable/settings.py` with your database credentials.
-   - By default, the project uses SQLite.
 
 5. **Run Migrations**:
    ```bash
@@ -59,10 +58,11 @@ Ensure you have the following installed:
    python manage.py runserver
    ```
 
-   Access the app at `http://127.0.0.1:8000`.
+   **Access the app at** `http://127.0.0.1:8000`
+   **Access the API Documentation at**: `https://documenter.getpostman.com/view/32556794/2sAYQggTLS`
 
 
 ## 🛠️ Features in Progress
 - **Timetable Integration**: Integrate with the Genetic Algorithm logic to dynamically generate timetables based on constraints.
-- **Authentication**: Add user roles (Admin, Faculty, Students) for managing timetable access.
+- **Authentication**: Add user roles (Admin, Faculty) for managing timetable access.
 - **Enhanced Scheduling Options**: Support for recurring events, holidays, and priority-based scheduling.
