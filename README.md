@@ -58,8 +58,9 @@ Ensure you have the following installed:
    python manage.py runserver
    ```
 
-   **Access the app at** `http://127.0.0.1:8000`
-   **Access the API Documentation at**: `https://documenter.getpostman.com/view/32556794/2sAYQggTLS`
+
+## Access the app at `http://127.0.0.1:8000`
+## Access the API Documentation at `https://documenter.getpostman.com/view/32556794/2sAYQggTLS`
 
 
 ## 🛠️ Features in Progress
