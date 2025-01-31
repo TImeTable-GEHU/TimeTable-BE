@@ -1,127 +1,160 @@
-import random
 import json
-from GA.chromosome import TimetableGeneration  # Import from GA package
+from Constants.time_intervals import TimeIntervalConstant
+from GA.chromosome import TimeTableGeneration
 from Constants.constant import (
-    WorkingDays,
-    Sections,
-    SubjectTeacherMap,
-    Classrooms,
-    RoomCapacity,
-    SubjectQuota,
-    TeacherPreferences, PenaltyConstants
+    PenaltyConstants,
+    Defaults,
 )
+from Samples.samples import SubjectTeacherMap, SpecialSubjects, SubjectWeeklyQuota, Classrooms, TeacherWorkload
 
 
-class TimetableFitnessCalculator:
-    def __init__(self, timetable):
+class TimetableFitnessEvaluator:
+    def __init__(
+        self,
+        timetable,
+        all_sections,
+        subject_teacher_mapping,
+        available_classrooms,
+        available_labs,
+        classroom_capacity,
+        section_student_strength,
+        subject_quota_data,
+        teacher_time_preferences,
+        teacher_daily_workload,
+    ):
         self.timetable = timetable
-        self.section_strength = Sections.sections
-        self.days = WorkingDays.days
-        self.sections = Sections.sections
-        self.subject_teacher_map = SubjectTeacherMap.subject_teacher_map
-        self.classrooms = Classrooms.classrooms
-        self.lab = Classrooms.labs
-        self.room_capacity = RoomCapacity.room_capacity
-        self.section_strength = RoomCapacity.section_strength
-        self.subject_quota = SubjectQuota.subject_quota
-        self.teacher_preferences = TeacherPreferences.teacher_preferences
-        self.teacher_work_load = {teacher: 5 for teacher in self.subject_teacher_map.keys()} 
+        self.available_days = Defaults.working_days  # Removed trailing comma
+        self.all_sections = all_sections
+        self.subject_teacher_mapping = subject_teacher_mapping
+        self.available_classrooms = available_classrooms
+        self.available_labs = available_labs
+        self.classroom_capacity = classroom_capacity
+        self.section_student_strength = section_student_strength
+        self.subject_quota_data = subject_quota_data
+        self.teacher_time_preferences = teacher_time_preferences
+        self.teacher_daily_workload = teacher_daily_workload
 
-    def calculate_fitness(self):
-        total_fitness_score = 0
-        section_fitness_scores = {}
+    def evaluate_timetable_fitness(self):
+        daily_section_fitness_scores = {}
         weekly_fitness_scores = {}
-        week_count = 1
-
-        for i in range(0, len(self.timetable), 5):  # Assuming 5 days per week
-            weekly_score = 0
-            weekly_name = f"Week {week_count}"
-
-            for j, day in enumerate(self.days):
-                day_schedule = self.timetable.get(f"Week {week_count} - {day}")
-                if not day_schedule:
-                    continue
-
-                section_fitness_scores[f"Week {week_count} - {day}"] = {}
-                daily_fitness_score = 0
-
+        teacher_workload_tracking = {}
+        for week, week_schedule in self.timetable.items():
+            weekly_fitness = 0
+            daily_section_fitness_scores[week] = {}
+            teacher_time_slot_tracking = {}
+            for day, day_schedule in week_schedule.items():
+                daily_section_fitness_scores[week][day] = {}
+                day_fitness = 0
                 for section, section_schedule in day_schedule.items():
-                    section_score = 100
-                    teacher_time_slots = {}
-                    classroom_time_slots = {}
-                    teacher_load = {}
+                    section_fitness = Defaults.starting_section_fitness
 
-                    for item in section_schedule:
-                        teacher = item['teacher_id']
-                        classroom = item['classroom_id']
-                        time_slot = item['time_slot']
-                        subject = item['subject_id']
-                        strength = self.section_strength.get(section, 0)
+                    classroom_time_slot_tracking = {}
 
-                        if "Break" in time_slot:
-                            continue
+                    for schedule_item in section_schedule:
+                        assigned_teacher = schedule_item["teacher_id"]
+                        assigned_classroom = schedule_item["classroom_id"]
+                        assigned_time_slot = TimeIntervalConstant.time_mapping.get(
+                            schedule_item["time_slot"]
+                        )
+                        section_strength = self.section_student_strength.get(section, 0)
 
-                        # Penalize if the teacher is assigned multiple sections at the same time
-                        if (teacher, time_slot) in teacher_time_slots:
-                            section_score -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
+                        # Penalty 1: Double booking a teacher in the same time slot
+                        if (assigned_teacher, assigned_time_slot) in teacher_time_slot_tracking.keys():
+                            section_fitness -= PenaltyConstants.PENALTY_TEACHER_DOUBLE_BOOKED
                         else:
-                            teacher_time_slots[(teacher, time_slot)] = section
+                            teacher_time_slot_tracking[(assigned_teacher, assigned_time_slot)] = section
 
-                        # Penalize if the classroom is assigned multiple sections at the same time
-                        if (classroom, time_slot) in classroom_time_slots:
-                            section_score -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
+                        # Penalty 2: Double booking a classroom in the same time slot
+                        if (assigned_classroom, assigned_time_slot) in classroom_time_slot_tracking:
+                            section_fitness -= PenaltyConstants.PENALTY_CLASSROOM_DOUBLE_BOOKED
                         else:
-                            classroom_time_slots[(classroom, time_slot)] = section
+                            classroom_time_slot_tracking[(assigned_classroom, assigned_time_slot)] = section
 
-                        # Track teacher load to avoid overloading them
-                        if teacher not in teacher_load:
-                            teacher_load[teacher] = []
-                        teacher_load[teacher].append(time_slot)
+                        # Penalty 3: Over-capacity classrooms
+                        if section_strength > self.classroom_capacity.get(
+                            assigned_classroom, Defaults.max_class_capacity
+                        ):
+                            section_fitness -= PenaltyConstants.PENALTY_OVER_CAPACITY
 
-                        # Penalize if the section strength exceeds the classroom capacity
-                        if strength > self.room_capacity.get(classroom, 0):
-                            section_score -= PenaltyConstants.PENALTY_OVER_CAPACITY
+                        # Penalty 4: Assigning teachers during unpreferred time slots
+                        preferred_time_slots = self.teacher_time_preferences.get(
+                            assigned_teacher, []
+                        )
+                        if assigned_time_slot not in preferred_time_slots:
+                            section_fitness -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
 
-                        # Penalize if the teacher is assigned to a time slot they don't prefer
-                        preferred_slots = self.teacher_preferences.get(teacher, [])
-                        if time_slot not in preferred_slots:
-                            section_score -= PenaltyConstants.PENALTY_UN_PREFERRED_SLOT
+                        # Penalty 5: Scheduling teacher on a non-duty day
+                        assigned_day = day
+                        if assigned_day not in TeacherWorkload.teacher_duty_days.get(assigned_teacher, []):
+                            section_fitness -= PenaltyConstants.PENALTY_NON_DUTY_DAY
 
-                    # Penalize if the teacher exceeds their work load
-                    for teacher, time_slots in teacher_load.items():
-                        if len(time_slots) > self.teacher_work_load.get(teacher, 5):
-                            section_score -= PenaltyConstants.PENALTY_OVERLOAD_TEACHER
+                        # Tracking teacher workload
+                        if assigned_teacher not in teacher_workload_tracking:
+                            teacher_workload_tracking[assigned_teacher] = []
+                        teacher_workload_tracking[assigned_teacher].append(assigned_time_slot)
 
-                    section_fitness_scores[f"Week {week_count} - {day}"][section] = section_score
-                    daily_fitness_score += section_score
+                    # Penalty 6: Exceeding teacher daily workload
+                    for teacher, times_assigned in teacher_workload_tracking.items():
+                        if teacher is not None:
+                            if len(times_assigned) > self.teacher_daily_workload.get(teacher, 0):
+                                section_fitness -= PenaltyConstants.PENALTY_OVERLOAD_TEACHER
 
-                weekly_score += daily_fitness_score  # Accumulate weekly score
-                total_fitness_score += daily_fitness_score
+                    daily_section_fitness_scores[week][day][section] = section_fitness
+                    day_fitness += section_fitness
 
-            weekly_fitness_scores[weekly_name] = weekly_score  # Store weekly score
-            week_count += 1
+                weekly_fitness += day_fitness
 
-        return total_fitness_score, section_fitness_scores, weekly_fitness_scores
+            weekly_fitness_scores[week] = weekly_fitness
+
+        return daily_section_fitness_scores, weekly_fitness_scores
 
 
-# Main Execution
-# Generate timetable (chromosome) using TimetableGeneration
-timetable_generator = TimetableGeneration()
-timetable = timetable_generator.create_timetable(5)  # Generate a timetable with 2 weeks
+if __name__ == "__main__":
+    total_sections = 6
+    total_classrooms = 8
+    total_labs = 3
 
-# Now using the new class for fitness calculation
-fitness_calculator = TimetableFitnessCalculator(timetable)
-overall_fitness, fitness_scores, weekly_fitness_scores = fitness_calculator.calculate_fitness()
+    # Generate timetable
+    timetable_generator = TimeTableGeneration(
+        teacher_subject_mapping=SubjectTeacherMap.subject_teacher_map,
+        total_sections=total_sections,
+        total_classrooms=total_classrooms,
+        total_labs=total_labs,
+        teacher_preferences=TeacherWorkload.teacher_preferences,
+        teacher_weekly_workload=TeacherWorkload.Weekly_workLoad,
+        special_subjects=SpecialSubjects.special_subjects,
+        subject_quota_limits=SubjectWeeklyQuota.subject_quota,
+        labs_list=SpecialSubjects.Labs,
+        teacher_duty_days=TeacherWorkload.teacher_duty_days,
+    )
+    generated_timetables = timetable_generator.create_timetable(5)
 
-# Save the timetable (chromosome) to a JSON file
-with open("GA/chromosome.json", "w") as chromosome_file:
-    json.dump(timetable, chromosome_file, indent=4)
+    # Evaluate fitness
+    fitness_evaluator = TimetableFitnessEvaluator(
+        generated_timetables,
+        timetable_generator.sections_manager.sections,
+        SubjectTeacherMap.subject_teacher_map,
+        timetable_generator.classrooms_manager.classrooms,
+        timetable_generator.classrooms_manager.labs,
+        timetable_generator.room_capacity_manager.room_capacity,
+        timetable_generator.room_capacity_manager.section_strength,
+        timetable_generator.subject_quota_limits,
+        timetable_generator.teacher_availability_preferences,
+        timetable_generator.weekly_workload,
+    )
 
-# Save the fitness scores to a separate JSON file
-fitness_output = {
-    "fitness_scores": fitness_scores,
-    "weekly_fitness_scores": weekly_fitness_scores
-}
+    section_fitness_data, weekly_fitness_data = fitness_evaluator.evaluate_timetable_fitness()
 
-with open("GA/fitness.json", "w") as fitness_file:
-    json.dump(fitness_output, fitness_file, indent=4)
+    # Save results
+    with open("GA/chromosome.json", "w") as timetable_file:
+        json.dump(generated_timetables, timetable_file, indent=4)
+
+    fitness_output_data = {
+        "section_fitness_scores": section_fitness_data,
+        "weekly_fitness_scores": weekly_fitness_data,
+    }
+
+    with open("GA/fitness.json", "w") as fitness_scores_file:
+        json.dump(fitness_output_data, fitness_scores_file, indent=4)
+
+    print("Timetable and fitness scores have been saved.")
