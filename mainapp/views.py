@@ -10,17 +10,26 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .db_drivers.mongodb_driver import MongoDriver
 from .db_drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
-from .serializers import RoomSerializer, TeacherSerializer, SubjectSerializer
+from .serializers import (
+    RoomSerializer,
+    TeacherSerializer,
+    SubjectSerializer,
+    ExcelFileUploadSerializer,
+)
 import os
 from GA.__init__ import run_timetable_generation
+from Constants.section_allocation import StudentScorer
+import pandas as pd
 import json
+
 
 def generateTimetable():
     output = run_timetable_generation()
     return output
 
+
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])  # Require authentication
+@permission_classes([IsAuthenticated])
 def generate_timetable(request):
     """
     Generate a timetable using the provided data.
@@ -33,8 +42,9 @@ def generate_timetable(request):
             {"error": f"Failed to generate timetable: {str(e)}"}, status=500
         )
 
+
 @api_view(["GET"])
-@permission_classes([AllowAny])  # Override global permission
+@permission_classes([AllowAny])
 def mongo_status(request):
     """
     Check MongoDB connection status.
@@ -45,7 +55,6 @@ def mongo_status(request):
         return JsonResponse({"mongodb": "Connected", "collections": collections})
     except Exception as e:
         return JsonResponse({"mongodb": "Not Connected", "error": str(e)})
-
 
 
 @api_view(["GET"])
@@ -482,3 +491,81 @@ def addStudent(
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def addStudentAPI(request):
+    """
+    Add multiple students from an Excel file.
+    """
+    serializer = ExcelFileUploadSerializer(data=request.data)
+    if serializer.is_valid():
+        excel_file = serializer.validated_data["file"]
+
+        try:
+            data = pd.read_excel(excel_file).fillna("")
+            students_list = data.to_dict(orient="records")
+
+            # Process section assignment
+            processed_students = StudentScorer(
+                students_list
+            ).entry_point_for_section_divide()
+
+            failed_rows = []
+
+            required_fields = [
+                "student_name",
+                "student_id",
+                "dept",
+                "course",
+                "branch",
+                "semester",
+            ]
+
+            for index, row in enumerate(processed_students):
+                missing_fields = [
+                    field for field in required_fields if not row.get(field)
+                ]
+                if missing_fields:
+                    failed_rows.append(
+                        {
+                            "row": index + 1,
+                            "error": f"Missing fields: {', '.join(missing_fields)}",
+                        }
+                    )
+                    continue
+
+                student_data = {
+                    "student_name": row.get("student_name"),
+                    "student_id": row.get("student_id"),
+                    "is_hosteller": row.get("is_hosteller"),
+                    "location": row.get("location"),
+                    "dept": row.get("dept"),
+                    "course": row.get("course"),
+                    "branch": row.get("branch"),
+                    "semester": row.get("semester"),
+                    "section": row.get("section"),
+                    "cgpa": row.get("cgpa"),
+                }
+
+                result = addStudent(**student_data)
+
+                if result["status"] != "success":
+                    failed_rows.append({"row": index + 1, "error": result["message"]})
+
+            if failed_rows:
+                return Response(
+                    {
+                        "message": "Some students could not be added",
+                        "errors": failed_rows,
+                    },
+                    status=400,
+                )
+
+            return Response({"message": "All students added successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+    return Response(serializer.errors, status=400)
