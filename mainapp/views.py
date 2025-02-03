@@ -584,12 +584,10 @@ def detectConflicts(request):
             for csv_file in csv_files:
                 timetable_json = csv_to_json(csv_file)
                 timetables.append(json.loads(timetable_json))
-                # This converts the JSON string into a Python dictionary and stores it in the timetables list
 
             conflict_checker = IsConflict()
             conflict_results = []
 
-            # Process each pair of timetables to detect conflicts
             for i in range(len(timetables)):
                 for j in range(i + 1, len(timetables)):
                     timetable1 = timetables[i]
@@ -605,7 +603,7 @@ def detectConflicts(request):
                                 {
                                     "timetable_1": f"Timetable {i + 1}",
                                     "timetable_2": f"Timetable {j + 1}",
-                                    **conflict,  # Unpack conflict dictionary to add details
+                                    "conflict_details": conflict,
                                 }
                             )
                     else:
