@@ -7,8 +7,8 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .db_drivers.mongodb_driver import MongoDriver
-from .db_drivers.postgres_driver import PostgresDriver
+from .drivers.mongodb_driver import MongoDriver
+from .drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
 from .serializers import (
     RoomSerializer,
@@ -21,6 +21,9 @@ from GA.__init__ import run_timetable_generation
 from Constants.section_allocation import StudentScorer
 import pandas as pd
 import json
+from django.views.decorators.csrf import csrf_exempt
+from .drivers.converter import csv_to_json
+from Constants.is_conflict import IsConflict
 
 
 def generateTimetable():
@@ -569,3 +572,59 @@ def addStudentAPI(request):
             return Response({"error": str(e)}, status=400)
 
     return Response(serializer.errors, status=400)
+
+
+@csrf_exempt
+def detectConflicts(request):
+    if request.method == "POST" and request.FILES.getlist("csv_files"):
+        try:
+            csv_files = request.FILES.getlist("csv_files")
+            timetables = []
+
+            for csv_file in csv_files:
+                timetable_json = csv_to_json(csv_file)
+                timetables.append(json.loads(timetable_json))
+                # This converts the JSON string into a Python dictionary and stores it in the timetables list
+
+            conflict_checker = IsConflict()
+            conflict_results = []
+
+            # Process each pair of timetables to detect conflicts
+            for i in range(len(timetables)):
+                for j in range(i + 1, len(timetables)):
+                    timetable1 = timetables[i]
+                    timetable2 = timetables[j]
+
+                    conflicts = conflict_checker.process_schedules(
+                        timetable1, timetable2
+                    )
+
+                    if isinstance(conflicts, list) and conflicts:
+                        for conflict in conflicts:
+                            conflict_results.append(
+                                {
+                                    "timetable_1": f"Timetable {i + 1}",
+                                    "timetable_2": f"Timetable {j + 1}",
+                                    **conflict,  # Unpack conflict dictionary to add details
+                                }
+                            )
+                    else:
+                        conflict_results.append(
+                            {
+                                "timetable_1": f"Timetable {i + 1}",
+                                "timetable_2": f"Timetable {j + 1}",
+                                "message": "No conflicts found.",
+                            }
+                        )
+
+            if conflict_results:
+                return JsonResponse({"conflicts": conflict_results}, status=200)
+
+            return JsonResponse({"message": "No conflicts detected."}, status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=400)
+
+    return JsonResponse(
+        {"error": "Invalid request. Please provide CSV files."}, status=400
+    )

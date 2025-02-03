@@ -2,7 +2,7 @@
 from rest_framework.decorators import api_view
 from rest_framework import status
 from datetime import datetime
-from ..db_drivers.mongodb_driver import MongoDriver
+from ..drivers.mongodb_driver import MongoDriver
 from .serializers import TimetableSerializer
 from django.http import JsonResponse
 

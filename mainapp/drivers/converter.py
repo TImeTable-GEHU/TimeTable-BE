@@ -1,37 +1,48 @@
 import csv
+import io
 import json
 
 
-def csv_to_json(csv_file):
-    with open(csv_file, mode="r", encoding="utf-8") as file:
-        reader = list(csv.reader(file))
-        time_slots = reader[0][1:]
-        timetable = {}
+def csv_to_json(file):
+    file.seek(0)  # Ensure the file pointer is at the beginning
+    reader = list(
+        csv.reader(io.StringIO(file.read().decode("utf-8")))
+    )  # Read uploaded file
+    time_slots = reader[0][1:]
+    timetable = {}
 
-        for i in range(1, len(reader), 2):
-            day = reader[i][0].strip()
-            if not day:
-                continue
+    # Iterate through the CSV rows, skipping the first row (header)
+    for i in range(1, len(reader), 2):
+        day = reader[i][0].strip()
+        if not day:
+            continue
 
-            timetable[day] = []
-            subjects = reader[i][1:]
-            teachers = reader[i + 1][1:] if i + 1 < len(reader) else []
+        timetable[day] = {}  # Initialize empty dictionary for each day
+        subjects = reader[i][1:]
+        teachers = reader[i + 1][1:] if i + 1 < len(reader) else []
 
-            for j, subject in enumerate(subjects):
-                subject = subject.strip()
-                if subject and subject not in ["BREAK", "LUNCH"]:
-                    timetable[day].append(
-                        {
-                            "teacher_id": (
-                                teachers[j].strip()
-                                if j < len(teachers) and teachers[j]
-                                else "Unknown"
-                            ),
-                            "subject_id": subject,
-                            "classroom_id": f"R{j+1}",
-                            "time_slot": time_slots[j],
-                        }
-                    )
+        # Create sections for each subject
+        for j, subject in enumerate(subjects):
+            subject = subject.strip()
+            if subject and subject not in ["BREAK", "LUNCH"]:
+                # Assuming each day can have multiple sections
+                section_key = f"Section {j + 1}"
+
+                if section_key not in timetable[day]:
+                    timetable[day][section_key] = []
+
+                timetable[day][section_key].append(
+                    {
+                        "teacher_id": (
+                            teachers[j].strip()
+                            if j < len(teachers) and teachers[j]
+                            else "Unknown"
+                        ),
+                        "subject_id": subject,
+                        "classroom_id": f"R{j+1}",
+                        "time_slot": time_slots[j],
+                    }
+                )
 
     return json.dumps(timetable, indent=2)
 
