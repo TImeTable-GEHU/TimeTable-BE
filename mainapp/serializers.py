@@ -34,5 +34,16 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = "__all__"
 
+
 class ExcelFileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
+
+    def validate_file(self, value):
+        """
+        Validate that the uploaded file is an Excel file.
+        """
+        if not value.name.endswith((".xls", ".xlsx")):
+            raise serializers.ValidationError(
+                "Invalid file format. Please upload an Excel file."
+            )
+        return value

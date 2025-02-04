@@ -20,7 +20,8 @@ from .views import (
     updateSubject,
     deleteSubject,
     generate_timetable,
-    addStudentAPI
+    addStudentAPI,
+    detectConflicts,
 )
 
 schema_view = get_schema_view(
@@ -63,11 +64,13 @@ urlpatterns = [
     path("deleteSubject/<int:pk>/", deleteSubject, name="delete-subject"),
     # generate timetable api
     path("generateTimetable/", generate_timetable, name="generate-timetable"),
+    # detect conflicts
+    path("detectConflicts/", detectConflicts, name="detect-conflicts"),
     # swagger
     path(
         "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"
     ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
-    #csv to chromosome
-    path('uploadStudentDetail/', addStudentAPI, name='upload-excel'),
+    # csv to chromosome
+    path("uploadStudentDetail/", addStudentAPI, name="upload-excel"),
 ]

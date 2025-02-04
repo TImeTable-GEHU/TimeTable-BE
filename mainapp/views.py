@@ -7,22 +7,32 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .db_drivers.mongodb_driver import MongoDriver
-from .db_drivers.postgres_driver import PostgresDriver
+from .drivers.mongodb_driver import MongoDriver
+from .drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
-from .serializers import ExcelFileUploadSerializer, RoomSerializer, TeacherSerializer, SubjectSerializer
+from .serializers import (
+    RoomSerializer,
+    TeacherSerializer,
+    SubjectSerializer,
+    ExcelFileUploadSerializer,
+)
 import os
 from GA.__init__ import run_timetable_generation
 from Constants.section_allocation import StudentScorer
-import json
 import pandas as pd
+import json
+from django.views.decorators.csrf import csrf_exempt
+from .drivers.converter import csv_to_json
+from Constants.is_conflict import IsConflict
+
 
 def generateTimetable():
     output = run_timetable_generation()
     return output
 
+
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])  # Require authentication
+@permission_classes([IsAuthenticated])
 def generate_timetable(request):
     """
     Generate a timetable using the provided data.
@@ -35,8 +45,9 @@ def generate_timetable(request):
             {"error": f"Failed to generate timetable: {str(e)}"}, status=500
         )
 
+
 @api_view(["GET"])
-@permission_classes([AllowAny])  # Override global permission
+@permission_classes([AllowAny])
 def mongo_status(request):
     """
     Check MongoDB connection status.
@@ -47,7 +58,6 @@ def mongo_status(request):
         return JsonResponse({"mongodb": "Connected", "collections": collections})
     except Exception as e:
         return JsonResponse({"mongodb": "Not Connected", "error": str(e)})
-
 
 
 @api_view(["GET"])
@@ -485,6 +495,7 @@ def addStudent(
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def addStudentAPI(request):
@@ -493,15 +504,41 @@ def addStudentAPI(request):
     """
     serializer = ExcelFileUploadSerializer(data=request.data)
     if serializer.is_valid():
-        excel_file = serializer.validated_data['file']
+        excel_file = serializer.validated_data["file"]
 
         try:
-            # Read the Excel file into a pandas DataFrame
-            data = pd.read_excel(excel_file)
-            data_dict = data.to_dict(orient="records")
-            data = StudentScorer(data_dict).entry_point_for_section_divide()
-            # Validate and process each row
-            for index, row in enumerate(data):
+            data = pd.read_excel(excel_file).fillna("")
+            students_list = data.to_dict(orient="records")
+
+            # Process section assignment
+            processed_students = StudentScorer(
+                students_list
+            ).entry_point_for_section_divide()
+
+            failed_rows = []
+
+            required_fields = [
+                "student_name",
+                "student_id",
+                "dept",
+                "course",
+                "branch",
+                "semester",
+            ]
+
+            for index, row in enumerate(processed_students):
+                missing_fields = [
+                    field for field in required_fields if not row.get(field)
+                ]
+                if missing_fields:
+                    failed_rows.append(
+                        {
+                            "row": index + 1,
+                            "error": f"Missing fields: {', '.join(missing_fields)}",
+                        }
+                    )
+                    continue
+
                 student_data = {
                     "student_name": row.get("student_name"),
                     "student_id": row.get("student_id"),
@@ -515,14 +552,19 @@ def addStudentAPI(request):
                     "cgpa": row.get("cgpa"),
                 }
 
-                # Call addStudent for each row
                 result = addStudent(**student_data)
-                if result['status'] != "success":
-                    # Handle any errors for specific rows
-                    return Response(
-                        {"message": f"Error in row {index}: {result['message']}"},
-                        status=400,
-                    )
+
+                if result["status"] != "success":
+                    failed_rows.append({"row": index + 1, "error": result["message"]})
+
+            if failed_rows:
+                return Response(
+                    {
+                        "message": "Some students could not be added",
+                        "errors": failed_rows,
+                    },
+                    status=400,
+                )
 
             return Response({"message": "All students added successfully"}, status=200)
 
@@ -530,3 +572,57 @@ def addStudentAPI(request):
             return Response({"error": str(e)}, status=400)
 
     return Response(serializer.errors, status=400)
+
+
+@csrf_exempt
+def detectConflicts(request):
+    if request.method == "POST" and request.FILES.getlist("csv_files"):
+        try:
+            csv_files = request.FILES.getlist("csv_files")
+            timetables = []
+
+            for csv_file in csv_files:
+                timetable_json = csv_to_json(csv_file)
+                timetables.append(json.loads(timetable_json))
+
+            conflict_checker = IsConflict()
+            conflict_results = []
+
+            for i in range(len(timetables)):
+                for j in range(i + 1, len(timetables)):
+                    timetable1 = timetables[i]
+                    timetable2 = timetables[j]
+
+                    conflicts = conflict_checker.process_schedules(
+                        timetable1, timetable2
+                    )
+
+                    if isinstance(conflicts, list) and conflicts:
+                        for conflict in conflicts:
+                            conflict_results.append(
+                                {
+                                    "timetable_1": f"Timetable {i + 1}",
+                                    "timetable_2": f"Timetable {j + 1}",
+                                    "conflict_details": conflict,
+                                }
+                            )
+                    else:
+                        conflict_results.append(
+                            {
+                                "timetable_1": f"Timetable {i + 1}",
+                                "timetable_2": f"Timetable {j + 1}",
+                                "message": "No conflicts found.",
+                            }
+                        )
+
+            if conflict_results:
+                return JsonResponse({"conflicts": conflict_results}, status=200)
+
+            return JsonResponse({"message": "No conflicts detected."}, status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=400)
+
+    return JsonResponse(
+        {"error": "Invalid request. Please provide CSV files."}, status=400
+    )
