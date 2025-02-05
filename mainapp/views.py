@@ -585,6 +585,8 @@ def detectConflicts(request):
                 timetable_json = csv_to_json(csv_file)
                 timetables.append(json.loads(timetable_json))
 
+                # print(timetable_json)
+
             conflict_checker = IsConflict()
             conflict_results = []
 
@@ -616,6 +618,7 @@ def detectConflicts(request):
                         )
 
             if conflict_results:
+                # print(conflict_results)
                 return JsonResponse({"conflicts": conflict_results}, status=200)
 
             return JsonResponse({"message": "No conflicts detected."}, status=200)
