@@ -5,44 +5,59 @@ import json
 
 def csv_to_json(file):
     file.seek(0)  # Ensure the file pointer is at the beginning
-    reader = list(
-        csv.reader(io.StringIO(file.read().decode("utf-8")))
-    )  # Read uploaded file
-    time_slots = reader[0][1:]
+    reader = list(csv.reader(io.StringIO(file.read().decode("utf-8"))))
+
+    # Identify the starting row for timetable data
+    start_index = None
+    for i, row in enumerate(reader):
+        if row and "DAY" in row[0].upper():
+            start_index = i
+            break
+
+    if start_index is None:
+        return json.dumps({"error": "No valid timetable structure found"}, indent=2)
+
+    reader = reader[start_index:]  # Skip metadata rows
+    time_slots = [slot.strip() for slot in reader[0][1:] if slot.strip()]
     timetable = {}
 
-    # Iterate through the CSV rows, skipping the first row (header)
-    for i in range(1, len(reader), 2):
-        day = reader[i][0].strip()
-        if not day:
-            continue
+    weekdays = {
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+    }
 
-        timetable[day] = {}  # Initialize empty dictionary for each day
-        subjects = reader[i][1:]
-        teachers = reader[i + 1][1:] if i + 1 < len(reader) else []
+    for i in range(
+        1, len(reader), 2
+    ):  # Iterate two rows at a time (subjects and teachers)
+        if i + 1 < len(reader):  # Ensure the next row exists
+            day = reader[i][0].strip().upper()
+            if day not in weekdays:
+                continue  # Skip rows that are not part of the main weekday schedule
 
-        # Create sections for each subject
-        for j, subject in enumerate(subjects):
-            subject = subject.strip()
-            if subject and subject not in ["BREAK", "LUNCH"]:
-                # Assuming each day can have multiple sections
-                section_key = f"Section {j + 1}"
+            timetable[day] = []  # Initialize list for day's classes
+            subjects = [
+                cell.split("(")[0].strip()
+                for cell in reader[i][1 : len(time_slots) + 1]
+            ]  # Remove extra mapping info
+            teachers = reader[i + 1][1 : len(time_slots) + 1]
 
-                if section_key not in timetable[day]:
-                    timetable[day][section_key] = []
-
-                timetable[day][section_key].append(
-                    {
-                        "teacher_id": (
-                            teachers[j].strip()
-                            if j < len(teachers) and teachers[j]
-                            else "Unknown"
-                        ),
-                        "subject_id": subject,
-                        "classroom_id": f"R{j+1}",
-                        "time_slot": time_slots[j],
-                    }
-                )
+            for j, subject in enumerate(subjects):
+                subject = subject.strip()
+                if subject and subject not in ["BREAK", "LUNCH", ""]:
+                    timetable[day].append(
+                        {
+                            "teacher_id": (
+                                teachers[j].strip()
+                                if j < len(teachers) and teachers[j]
+                                else "Unknown"
+                            ),
+                            "subject_id": subject,
+                            "time_slot": time_slots[j],
+                        }
+                    )
 
     return json.dumps(timetable, indent=2)
 
