@@ -580,15 +580,16 @@ def detectConflicts(request):
         try:
             csv_files = request.FILES.getlist("csv_files")
             timetables = []
+            file_names = []
 
             for csv_file in csv_files:
                 timetable_json = csv_to_json(csv_file)
                 timetables.append(json.loads(timetable_json))
-
-                # print(timetable_json)
+                file_names.append(csv_file.name)
 
             conflict_checker = IsConflict()
             conflict_results = []
+            has_conflicts = False
 
             for i in range(len(timetables)):
                 for j in range(i + 1, len(timetables)):
@@ -599,29 +600,23 @@ def detectConflicts(request):
                         timetable1, timetable2
                     )
 
-                    if isinstance(conflicts, list) and conflicts:
-                        for conflict in conflicts:
-                            conflict_results.append(
-                                {
-                                    "timetable_1": f"Timetable {i + 1}",
-                                    "timetable_2": f"Timetable {j + 1}",
-                                    "conflict_details": conflict,
-                                }
-                            )
-                    else:
+                    if conflicts:
+                        has_conflicts = True
                         conflict_results.append(
                             {
-                                "timetable_1": f"Timetable {i + 1}",
-                                "timetable_2": f"Timetable {j + 1}",
-                                "message": "No conflicts found.",
+                                "timetable_1": file_names[i],
+                                "timetable_2": file_names[j],
+                                "conflict_details": conflicts,
                             }
                         )
 
-            if conflict_results:
-                # print(conflict_results)
+            if has_conflicts:
                 return JsonResponse({"conflicts": conflict_results}, status=200)
-
-            return JsonResponse({"message": "No conflicts detected."}, status=200)
+            else:
+                return JsonResponse(
+                    {"message": "No conflicts found between any two timetables."},
+                    status=200,
+                )
 
         except Exception as e:
             return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=400)
