@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "mainapp",
     "drf_yasg",
 ]
@@ -49,10 +50,19 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Access token expiration
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # Refresh token expiration
-    "ROTATE_REFRESH_TOKENS": False,  # Use one refresh token per user
-    "BLACKLIST_AFTER_ROTATION": False,  # Optionally blacklist used refresh tokens
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # Short lifespan for security
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # Allows re-authentication
+    "ROTATE_REFRESH_TOKENS": True,  # Generate new refresh tokens on refresh
+    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old refresh tokens after rotation
+    "ALGORITHM": "HS256",  # Default encryption algorithm
+    "SIGNING_KEY": SECRET_KEY,  # Uses Django's SECRET_KEY
+    "AUTH_HEADER_TYPES": ("Bearer",),  # Use "Bearer" in Authorization headers
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=30),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 MIDDLEWARE = [

@@ -1,5 +1,4 @@
 from django.http import JsonResponse
-from pygments.token import String
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.mail import send_mail
@@ -24,6 +23,84 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from .drivers.converter import csv_to_json
 from Constants.is_conflict import IsConflict
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def login(request):
+    """
+    Authenticate a teacher using email and return JWT tokens.
+    """
+    email = request.data.get("email", "").strip().lower()
+    password = request.data.get("password", "").strip()
+
+    if not email or not password:
+        return Response({"error": "Email and password are required."}, status=400)
+
+    # Find the user by email
+    user = User.objects.filter(email=email).first()
+
+    if not user:
+        return Response({"error": "Invalid email or password."}, status=401)
+
+    # Authenticate using username (which is teacher_code)
+    user = authenticate(username=user.username, password=password)
+
+    if not user:
+        return Response({"error": "Invalid email or password."}, status=401)
+
+    teacher = Teacher.objects.filter(user=user).first()
+    if not teacher:
+        return Response({"error": "Teacher account not found."}, status=404)
+
+    # Generate JWT tokens
+    refresh = RefreshToken.for_user(user)
+
+    return Response(
+        {
+            "message": "Login successful",
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh),
+            "teacher": {
+                "id": teacher.id,
+                "name": user.get_full_name(),
+                "email": user.email,
+                "teacher_code": teacher.teacher_code,
+                "phone": teacher.phone,
+                "department": teacher.department,
+                "designation": teacher.designation,
+                "working_days": teacher.working_days,
+                "teacher_type": teacher.teacher_type,
+            },
+        },
+        status=200,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    """
+    Log out a teacher by blacklisting their refresh token.
+    """
+    try:
+        refresh_token = request.data.get("refresh_token")
+
+        if not refresh_token:
+            return Response(
+                {"error": "Refresh token is required for logout."}, status=400
+            )
+
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+
+        return Response({"message": "Logout successful."}, status=200)
+
+    except Exception as e:
+        return Response({"error": f"Logout failed: {str(e)}"}, status=500)
 
 
 def generateTimetable():
@@ -39,6 +116,7 @@ def generate_timetable(request):
     """
     try:
         timetable = generateTimetable()
+        print(timetable)
         return Response(timetable, status=200)
     except Exception as e:
         return Response(
@@ -192,58 +270,79 @@ def getTeachers(request):
 @permission_classes([AllowAny])
 def addTeacher(request):
     """
-    Add a new teacher, map the preferred subjects to the teacher, and send a confirmation email.
+    Add a new teacher, generate a unique teacher_code & password, map preferred subjects, and send credentials via email.
     """
     teacher_data = request.data
 
     email = teacher_data.get("email", "").strip().lower()
-    teacher_data["email"] = email
+    full_name = teacher_data.get("name", "").strip()
+    preferred_subjects = teacher_data.get("preferred_subjects", [])
 
-    existing_teacher = Teacher.objects.filter(email=email).first()
-    if existing_teacher:
-        return Response(
-            {"error": "Teacher with this email already exists."}, status=400
+    if not email or not full_name:
+        return Response({"error": "Email and Name are required."}, status=400)
+
+    existing_user = User.objects.filter(email=email).first()
+    if existing_user:
+        return Response({"error": "User with this email already exists."}, status=400)
+
+    teacher_code = Teacher.generate_teacher_code(full_name)
+    first_name = full_name.split()[0]
+    raw_password = f"{first_name}{teacher_code}"
+
+    # Create User and hash password automatically
+    user = User.objects.create_user(
+        username=teacher_code.lower(),
+        email=email,
+        first_name=full_name.split()[0],
+        last_name=" ".join(full_name.split()[1:]),
+        password=raw_password,  # This is automatically hashed
+    )
+
+    # Create the Teacher linked to User
+    teacher = Teacher.objects.create(
+        user=user,
+        phone=teacher_data.get("phone", ""),
+        department=teacher_data.get("department", ""),
+        designation=teacher_data.get("designation", ""),
+        working_days=teacher_data.get("working_days", ""),
+        teacher_code=teacher_code,
+        teacher_type=teacher_data.get("teacher_type", "faculty"),
+    )
+
+    for subject_name in preferred_subjects:
+        subject = Subject.objects.filter(subject_name=subject_name).first()
+        if subject:
+            TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
+
+    # Send email with credentials
+    email_subject = "Your Teacher Account Credentials"
+    email_body = render_to_string(
+        "emails/teacher_confirmation_email.html",
+        {
+            "teacher_name": full_name,
+            "teacher_code": teacher_code,
+            "preferred_subjects": preferred_subjects,
+            "email": email,
+            "password": raw_password,
+        },
+    )
+
+    try:
+        send_mail(
+            email_subject,
+            email_body,
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+            html_message=email_body,
         )
+    except Exception as e:
+        return Response({"error": f"Failed to send email: {str(e)}"}, status=500)
 
-    serializer = TeacherSerializer(data=teacher_data)
-    if serializer.is_valid():
-        teacher = serializer.save()
-
-        preferred_subjects = teacher_data.get("preferred_subjects", [])
-        for subject_name in preferred_subjects:
-            subject = Subject.objects.filter(subject_name=subject_name).first()
-            if subject:
-                TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
-
-        email_subject = "Confirmation: Details Submitted"
-        email_body = render_to_string(
-            "emails/teacher_confirmation_email.html",
-            {
-                "teacher_name": teacher.name,
-                "preferred_subjects": preferred_subjects,
-            },
-        )
-
-        try:
-            send_mail(
-                email_subject,
-                email_body,
-                settings.EMAIL_HOST_USER,
-                [teacher.email],
-                fail_silently=False,
-                html_message=email_body,
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to send confirmation email: {str(e)}"}, status=500
-            )
-
-        return Response(
-            {"message": "Teacher added successfully.", "data": serializer.data},
-            status=201,
-        )
-    else:
-        return Response(serializer.errors, status=400)
+    return Response(
+        {"message": "Teacher added successfully, credentials sent via email."},
+        status=201,
+    )
 
 
 @api_view(["PUT"])
@@ -475,24 +574,33 @@ def addStudent(
     cgpa,
 ):
     try:
-        student = Student.objects.create(
-            student_name=student_name,
+        student, created = Student.objects.get_or_create(
             student_id=student_id,
-            is_hosteller=is_hosteller,
-            location=location,
-            dept=dept,
-            course=course,
-            branch=branch,
-            semester=semester,
-            section=section,
-            cgpa=cgpa,
+            defaults={
+                "student_name": student_name,
+                "is_hosteller": is_hosteller,
+                "location": location,
+                "dept": dept,
+                "course": course,
+                "branch": branch,
+                "semester": semester,
+                "section": section,
+                "cgpa": cgpa,
+            },
         )
-        return {
-            "status": "success",
-            "message": "Student added successfully",
-            "student": student,
-        }
+        if created:
+            return {
+                "status": "success",
+                "message": "Student added successfully",
+                "student": student,
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Student ID {student_id} already exists.",
+            }
     except Exception as e:
+        print(f"Error adding student {student_id}: {str(e)}")  # Debugging
         return {"status": "error", "message": str(e)}
 
 
@@ -508,15 +616,18 @@ def addStudentAPI(request):
 
         try:
             data = pd.read_excel(excel_file).fillna("")
+            data.columns = data.columns.str.lower()
+
+            if data.empty:
+                return Response({"error": "Uploaded file is empty"}, status=400)
+
             students_list = data.to_dict(orient="records")
 
-            # Process section assignment
             processed_students = StudentScorer(
                 students_list
             ).entry_point_for_section_divide()
 
             failed_rows = []
-
             required_fields = [
                 "student_name",
                 "student_id",
@@ -558,6 +669,7 @@ def addStudentAPI(request):
                     failed_rows.append({"row": index + 1, "error": result["message"]})
 
             if failed_rows:
+                print(f"Some students could not be added: {failed_rows}")
                 return Response(
                     {
                         "message": "Some students could not be added",
@@ -569,6 +681,7 @@ def addStudentAPI(request):
             return Response({"message": "All students added successfully"}, status=200)
 
         except Exception as e:
+            print(f"Error processing Excel file: {str(e)}")
             return Response({"error": str(e)}, status=400)
 
     return Response(serializer.errors, status=400)

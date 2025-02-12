@@ -4,6 +4,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from .views import (
+    login,
+    logout,
     mongo_status,
     postgres_status,
     getRooms,
@@ -38,6 +40,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # login route
+    path("login/", login, name="login"),
+    # logout route
+    path("logout/", logout, name="logout"),
     # check database connection
     path("mongo-status/", mongo_status, name="mongo-status"),
     path("postgres-status/", postgres_status, name="postgres-status"),
@@ -72,5 +78,5 @@ urlpatterns = [
     ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
     # csv to chromosome
-    path("uploadStudentDetail/", addStudentAPI, name="upload-excel"),
+    path("addStudentAPI/", addStudentAPI, name="addStudentAPI"),
 ]
