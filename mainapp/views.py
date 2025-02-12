@@ -80,29 +80,6 @@ def login(request):
     )
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def logout(request):
-    """
-    Log out a teacher by blacklisting their refresh token.
-    """
-    try:
-        refresh_token = request.data.get("refresh_token")
-
-        if not refresh_token:
-            return Response(
-                {"error": "Refresh token is required for logout."}, status=400
-            )
-
-        token = RefreshToken(refresh_token)
-        token.blacklist()
-
-        return Response({"message": "Logout successful."}, status=200)
-
-    except Exception as e:
-        return Response({"error": f"Logout failed: {str(e)}"}, status=500)
-
-
 def generateTimetable():
     output = run_timetable_generation()
     return output
@@ -256,7 +233,7 @@ def deleteRoom(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def getTeachers(request):
     """
     Retrieve a list of all teachers along with their preferred subjects.
@@ -346,7 +323,7 @@ def addTeacher(request):
 
 
 @api_view(["PUT"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def updateTeacher(request, pk):
     """
     Update an existing teacher's detail by ID, including preferred subjects.
@@ -465,12 +442,14 @@ def addSubject(request):
         subject_name = subject_data.get("subject_name")
         subject_code = subject_data.get("subject_code")
         credits = subject_data.get("credits")
+        weekly_quota_limit = subject_data.get("weekly_quota_limit")
+        is_special_subject = subject_data.get("is_special_subject", "No")
 
-        if not all([subject_name, subject_code, credits]):
+        if not all([subject_name, subject_code, credits, weekly_quota_limit]):
             errors.append(
                 {
                     "subject_data": subject_data,
-                    "error": "Please provide subject_name, subject_code, and credits for each subject.",
+                    "error": "Please provide subject_name, subject_code, credits, and weekly quota limit for each subject.",
                 }
             )
             continue
@@ -489,6 +468,8 @@ def addSubject(request):
             "subject_name": subject_name,
             "subject_code": subject_code,
             "credits": credits,
+            "weekly_quota_limit": weekly_quota_limit,
+            "is_special_subject": is_special_subject,
             "dept": dept,
             "course": course,
             "branch": branch,

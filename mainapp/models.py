@@ -52,6 +52,8 @@ class Subject(models.Model):
     subject_code = models.CharField(max_length=10)
     semester = models.IntegerField()
     credits = models.IntegerField()
+    weekly_quota_limit = models.IntegerField(default=1)
+    is_special_subject = models.CharField(max_length=10, default="No")
     dept = models.CharField(max_length=50)
     course = models.CharField(max_length=100)
     branch = models.CharField(max_length=100, default="")

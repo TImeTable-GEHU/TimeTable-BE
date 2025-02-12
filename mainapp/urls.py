@@ -5,7 +5,6 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from .views import (
     login,
-    logout,
     mongo_status,
     postgres_status,
     getRooms,
@@ -42,8 +41,6 @@ schema_view = get_schema_view(
 urlpatterns = [
     # login route
     path("login/", login, name="login"),
-    # logout route
-    path("logout/", logout, name="logout"),
     # check database connection
     path("mongo-status/", mongo_status, name="mongo-status"),
     path("postgres-status/", postgres_status, name="postgres-status"),
