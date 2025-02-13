@@ -5,6 +5,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from .views import (
     login,
+    getSpecificTeacher,
     mongo_status,
     postgres_status,
     getRooms,
@@ -53,6 +54,7 @@ urlpatterns = [
     path("updateRoom/<int:pk>/", updateRoom, name="update-room"),
     path("deleteRoom/<int:pk>/", deleteRoom, name="delete-room"),
     # teacher's apis
+    path("getSpecificTeacher/", getSpecificTeacher, name="get-Specific-Teacher"),
     path("getTeachers/", getTeachers, name="get-Teachers"),
     path("addTeacher/", addTeacher, name="add-Teacher"),
     path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),

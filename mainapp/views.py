@@ -40,13 +40,12 @@ def login(request):
     if not email or not password:
         return Response({"error": "Email and password are required."}, status=400)
 
-    # Find the user by email
     user = User.objects.filter(email=email).first()
 
     if not user:
         return Response({"error": "Invalid email or password."}, status=401)
 
-    # Authenticate using username (which is teacher_code)
+    # Authenticate using username
     user = authenticate(username=user.username, password=password)
 
     if not user:
@@ -65,16 +64,35 @@ def login(request):
             "access_token": str(refresh.access_token),
             "refresh_token": str(refresh),
             "teacher": {
-                "id": teacher.id,
-                "name": user.get_full_name(),
-                "email": user.email,
-                "teacher_code": teacher.teacher_code,
-                "phone": teacher.phone,
-                "department": teacher.department,
-                "designation": teacher.designation,
-                "working_days": teacher.working_days,
                 "teacher_type": teacher.teacher_type,
             },
+        },
+        status=200,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def getSpecificTeacher(request):
+    """
+    Retrieve the details of the authenticated teacher.
+    """
+    user = request.user
+    teacher = Teacher.objects.filter(user=user).first()
+
+    if not teacher:
+        return Response({"error": "Teacher account not found."}, status=404)
+
+    return Response(
+        {
+            "id": teacher.id,
+            "name": user.get_full_name(),
+            "email": user.email,
+            "teacher_code": teacher.teacher_code,
+            "phone": teacher.phone,
+            "department": teacher.department,
+            "designation": teacher.designation,
+            "working_days": teacher.working_days,
         },
         status=200,
     )
