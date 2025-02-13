@@ -83,6 +83,14 @@ def getSpecificTeacher(request):
     if not teacher:
         return Response({"error": "Teacher account not found."}, status=404)
 
+    subject_codes = TeacherSubject.get_teacher_subjects(teacher.teacher_code)
+
+    subject_names = list(
+        Subject.objects.filter(subject_code__in=subject_codes).values_list(
+            "subject_name", flat=True
+        )
+    )
+
     return Response(
         {
             "id": teacher.id,
@@ -93,6 +101,7 @@ def getSpecificTeacher(request):
             "department": teacher.department,
             "designation": teacher.designation,
             "working_days": teacher.working_days,
+            "preferred_subjects": subject_names,
         },
         status=200,
     )
@@ -265,13 +274,13 @@ def getTeachers(request):
 @permission_classes([AllowAny])
 def addTeacher(request):
     """
-    Add a new teacher, generate a unique teacher_code & password, map preferred subjects, and send credentials via email.
+    Add a new teacher, generate a unique teacher_code & password,
+    map preferred subjects in JSONField, and send credentials via email.
     """
     teacher_data = request.data
 
     email = teacher_data.get("email", "").strip().lower()
     full_name = teacher_data.get("name", "").strip()
-    preferred_subjects = teacher_data.get("preferred_subjects", [])
 
     if not email or not full_name:
         return Response({"error": "Email and Name are required."}, status=400)
@@ -290,7 +299,7 @@ def addTeacher(request):
         email=email,
         first_name=full_name.split()[0],
         last_name=" ".join(full_name.split()[1:]),
-        password=raw_password,  # This is automatically hashed
+        password=raw_password,
     )
 
     # Create the Teacher linked to User
@@ -304,10 +313,21 @@ def addTeacher(request):
         teacher_type=teacher_data.get("teacher_type", "faculty"),
     )
 
-    for subject_name in preferred_subjects:
+    subject_names = teacher_data.get("preferred_subjects", [])
+    # Convert subject names to subject codes
+    subject_codes = []
+    for subject_name in subject_names:
         subject = Subject.objects.filter(subject_name=subject_name).first()
         if subject:
-            TeacherSubject.objects.create(teacher_id=teacher, subject_id=subject)
+            subject_codes.append(subject.subject_code)
+        else:
+            return Response(
+                {"error": f"Subject '{subject_name}' not found."}, status=404
+            )
+
+    # Map preferred subjects using subject codes
+    for subject_code in subject_codes:
+        TeacherSubject.add_teacher_to_subject(subject_code, teacher_code)
 
     # Send email with credentials
     email_subject = "Your Teacher Account Credentials"
@@ -316,7 +336,7 @@ def addTeacher(request):
         {
             "teacher_name": full_name,
             "teacher_code": teacher_code,
-            "preferred_subjects": preferred_subjects,
+            "preferred_subjects": subject_names,
             "email": email,
             "password": raw_password,
         },
@@ -356,18 +376,17 @@ def updateTeacher(request, pk):
             serializer.save()
 
             if "preferred_subjects" in request.data:
-                preferred_subjects = request.data["preferred_subjects"]
-                TeacherSubject.objects.filter(teacher_id=teacher).delete()
-                for subject_name in preferred_subjects:
-                    try:
-                        subject = Subject.objects.get(subject_name=subject_name)
-                        TeacherSubject.objects.create(
-                            teacher_id=teacher, subject_id=subject
-                        )
-                    except Subject.DoesNotExist:
-                        return Response(
-                            {"error": f"Subject '{subject_name}' not found"}, status=404
-                        )
+                new_preferred_subjects = request.data["preferred_subjects"]
+                teacher_code = teacher.teacher_code
+
+                # Remove teacher from all subjects they were previously assigned to
+                old_subjects = TeacherSubject.get_teacher_subjects(teacher_code)
+                for subject in old_subjects:
+                    TeacherSubject.remove_teacher_from_subject(subject, teacher_code)
+
+                # Add teacher to new preferred subjects
+                for subject_code in new_preferred_subjects:
+                    TeacherSubject.add_teacher_to_subject(subject_code, teacher_code)
 
             return Response(serializer.data, status=200)
         else:
