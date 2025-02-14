@@ -17,11 +17,15 @@ class TeacherSerializer(serializers.ModelSerializer):
         read_only_fields = ["password"]  # Only password should be read-only
 
     def get_preferred_subjects(self, obj):
-        preferred_subjects = TeacherSubject.objects.filter(teacher_id=obj)
-        return [ts.subject_id.subject_name for ts in preferred_subjects]
+        """
+        Retrieve subjects assigned to this teacher from the JSONField.
+        """
+        return TeacherSubject.get_teacher_subjects(obj.teacher_code)
 
     def create(self, validated_data):
-        """Ensure teacher_code is properly saved during creation."""
+        """
+        Ensure teacher_code is properly saved during creation.
+        """
         if "teacher_code" not in validated_data:
             validated_data["teacher_code"] = Teacher.generate_teacher_code(
                 validated_data["name"]
