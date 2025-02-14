@@ -31,18 +31,18 @@ class Teacher(models.Model):
         """Generate a unique teacher_code"""
         initials = "".join([part[0].upper() for part in name.split() if part])
         existing_codes = Teacher.objects.filter(
-            teacher_code__startswith=initials
+            teacher_code__startswith=f"{initials}-"
         ).values_list("teacher_code", flat=True)
         existing_numbers = sorted(
             [
-                int(code[len(initials) :])
+                int(code.split("-")[1])
                 for code in existing_codes
-                if code[len(initials) :].isdigit()
+                if "-" in code and code.split("-")[1].isdigit()
             ]
         )
 
         next_number = (existing_numbers[-1] + 1) if existing_numbers else 1
-        return f"{initials}{next_number:03}"
+        return f"{initials}-{next_number:02}"
 
 
 class Subject(models.Model):

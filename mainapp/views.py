@@ -97,6 +97,7 @@ def getSpecificTeacher(request):
             "name": user.get_full_name(),
             "email": user.email,
             "teacher_code": teacher.teacher_code,
+            "teacher_type": teacher.teacher_type,
             "phone": teacher.phone,
             "department": teacher.department,
             "designation": teacher.designation,
@@ -364,7 +365,7 @@ def addTeacher(request):
 @permission_classes([IsAuthenticated])
 def updateTeacher(request, pk):
     """
-    Update an existing teacher's detail by ID, including preferred subjects.
+    Update an existing teacher's details by ID, including preferred subjects.
     """
     try:
         teacher = Teacher.objects.get(id=pk)
@@ -376,19 +377,64 @@ def updateTeacher(request, pk):
             serializer.save()
 
             if "preferred_subjects" in request.data:
-                new_preferred_subjects = request.data["preferred_subjects"]
+                new_subject_names = request.data["preferred_subjects"]
                 teacher_code = teacher.teacher_code
 
-                # Remove teacher from all subjects they were previously assigned to
-                old_subjects = TeacherSubject.get_teacher_subjects(teacher_code)
-                for subject in old_subjects:
-                    TeacherSubject.remove_teacher_from_subject(subject, teacher_code)
+                # Fetch existing mapping and remove teacher from all assigned subjects
+                try:
+                    mapping = TeacherSubject.objects.get(id=1)
+                    for subject_code in list(mapping.subject_teacher_map.keys()):
+                        if teacher_code in mapping.subject_teacher_map[subject_code]:
+                            mapping.subject_teacher_map[subject_code].remove(
+                                teacher_code
+                            )
+                            if not mapping.subject_teacher_map[
+                                subject_code
+                            ]:  # Remove key if empty
+                                del mapping.subject_teacher_map[subject_code]
+                    mapping.save()
+                except TeacherSubject.DoesNotExist:
+                    pass  # No mapping exists yet, so nothing to remove
+
+                # Convert subject names to subject codes
+                subject_codes = []
+                for subject_name in new_subject_names:
+                    subject = Subject.objects.filter(subject_name=subject_name).first()
+                    if subject:
+                        subject_codes.append(subject.subject_code)
+                    else:
+                        return Response(
+                            {"error": f"Subject '{subject_name}' not found."},
+                            status=404,
+                        )
 
                 # Add teacher to new preferred subjects
-                for subject_code in new_preferred_subjects:
+                for subject_code in subject_codes:
                     TeacherSubject.add_teacher_to_subject(subject_code, teacher_code)
 
-            return Response(serializer.data, status=200)
+            # Fetch updated subject names for response
+            updated_subject_codes = TeacherSubject.get_teacher_subjects(
+                teacher.teacher_code
+            )
+            updated_subject_names = [
+                Subject.objects.get(subject_code=code).subject_name
+                for code in updated_subject_codes
+            ]
+
+            return Response(
+                {
+                    "id": teacher.id,
+                    "name": teacher.user.get_full_name(),
+                    "email": teacher.user.email,
+                    "teacher_code": teacher.teacher_code,
+                    "phone": teacher.phone,
+                    "department": teacher.department,
+                    "designation": teacher.designation,
+                    "working_days": teacher.working_days,
+                    "preferred_subjects": updated_subject_names,
+                },
+                status=200,
+            )
         else:
             return Response(serializer.errors, status=400)
 
