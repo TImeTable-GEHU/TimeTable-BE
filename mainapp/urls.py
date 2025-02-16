@@ -6,8 +6,9 @@ from drf_yasg import openapi
 from .views import (
     login,
     getSpecificTeacher,
-    mongo_status,
-    postgres_status,
+    getPendingRequests,
+    approveSubjectRequests,
+    getApprovedSubjects,
     getRooms,
     addRoom,
     updateRoom,
@@ -42,9 +43,6 @@ schema_view = get_schema_view(
 urlpatterns = [
     # login route
     path("login/", login, name="login"),
-    # check database connection
-    path("mongo-status/", mongo_status, name="mongo-status"),
-    path("postgres-status/", postgres_status, name="postgres-status"),
     # JWT Authentication Routes
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
@@ -59,6 +57,14 @@ urlpatterns = [
     path("addTeacher/", addTeacher, name="add-Teacher"),
     path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),
     path("deleteTeacher/<int:pk>/", deleteTeacher, name="delete-Teacher"),
+    # hod's apis
+    path("getPendingRequests/", getPendingRequests, name="get-pending-requests"),
+    path(
+        "approveSubjectRequests/",
+        approveSubjectRequests,
+        name="approve-subject-requests",
+    ),
+    path("getApprovedSubjects/", getApprovedSubjects, name="get-approved-subjects"),
     # subject's apis
     path("getAllSubjects/", getAllSubjects, name="get-all-subjects"),
     path(
