@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .drivers.mongodb_driver import MongoDriver
 from .drivers.postgres_driver import PostgresDriver
 from .models import Room, Teacher, Subject, TeacherSubject, Student
+from drivers.mongodb_driver import MongoDriver
 from .serializers import (
     RoomSerializer,
     TeacherSerializer,
@@ -109,8 +110,17 @@ def getSpecificTeacher(request):
 
 
 def generateTimetable():
-    output = run_timetable_generation()
-    return output
+    output = run_timetable_generation() 
+    chromosome_output, teacher_availability, classroom_availability = output
+   
+  
+    mongo_driver = MongoDriver()
+    mongo_driver.delete_many("teacher_availability", {})  
+    mongo_driver.delete_many("classroom_availability", {})
+    mongo_driver.insert_one("teacher_availability", teacher_availability)
+    mongo_driver.insert_one("classroom_availability", classroom_availability)
+    return chromosome_output 
+
 
 
 @api_view(["POST"])
@@ -672,84 +682,95 @@ def addStudent(
 @permission_classes([IsAuthenticated])
 def addStudentAPI(request):
     """
-    Add multiple students from an Excel file.
+    Add multiple students from multiple Excel files and allocate them into sections.
     """
-    serializer = ExcelFileUploadSerializer(data=request.data)
-    if serializer.is_valid():
-        excel_file = serializer.validated_data["file"]
+    files = request.FILES.getlist("file")  # Support multiple files
 
+    if not files:
+        return Response({"error": "No files uploaded"}, status=400)
+
+    response_data = []  # Store results for each file
+
+    for file in files:
         try:
-            data = pd.read_excel(excel_file).fillna("")
+            data = pd.read_excel(file).fillna("")
             data.columns = data.columns.str.lower()
 
             if data.empty:
-                return Response({"error": "Uploaded file is empty"}, status=400)
+                response_data.append({"file": file.name, "error": "Uploaded file is empty"})
+                continue
 
             students_list = data.to_dict(orient="records")
 
-            processed_students = StudentScorer(
-                students_list
-            ).entry_point_for_section_divide()
+            # Get class strength from request or use default (e.g., 50)
+            class_strength = request.data.get("class_strength", 50)
+            try:
+                class_strength = int(class_strength)
+                if class_strength <= 0:
+                    raise ValueError("Class strength must be a positive integer.")
+            except ValueError:
+                response_data.append({"file": file.name, "error": "Invalid class strength value"})
+                continue
+
+            # Initialize scorer and assign scores
+            scorer = StudentScorer()
+            students_with_scores = scorer.assign_scores_to_students(students_list)
+
+            # Divide students into sections
+            sections = scorer.divide_students_into_sections(students_with_scores, class_strength)
 
             failed_rows = []
-            required_fields = [
-                "student_name",
-                "student_id",
-                "dept",
-                "course",
-                "branch",
-                "semester",
-            ]
+            required_fields = ["student_name", "student_id", "dept", "course", "branch", "semester"]
+            sectioned_students = {}
 
-            for index, row in enumerate(processed_students):
-                missing_fields = [
-                    field for field in required_fields if not row.get(field)
-                ]
-                if missing_fields:
-                    failed_rows.append(
-                        {
-                            "row": index + 1,
-                            "error": f"Missing fields: {', '.join(missing_fields)}",
-                        }
-                    )
-                    continue
+            # Section labels: A, B, C, ... Z, AA, AB, etc.
+            section_labels = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-                student_data = {
-                    "student_name": row.get("student_name"),
-                    "student_id": row.get("student_id"),
-                    "is_hosteller": row.get("is_hosteller"),
-                    "location": row.get("location"),
-                    "dept": row.get("dept"),
-                    "course": row.get("course"),
-                    "branch": row.get("branch"),
-                    "semester": row.get("semester"),
-                    "section": row.get("section"),
-                    "cgpa": row.get("cgpa"),
-                }
+            for section_index, section_students in enumerate(sections):
+                section_label = section_labels[section_index % len(section_labels)]
+                sectioned_students[section_label] = []
 
-                result = addStudent(**student_data)
+                for index, student in enumerate(section_students):
+                    student["section"] = section_label  # Assign section
 
-                if result["status"] != "success":
-                    failed_rows.append({"row": index + 1, "error": result["message"]})
+                    missing_fields = [field for field in required_fields if not student.get(field)]
+                    if missing_fields:
+                        failed_rows.append(
+                            {"row": index + 1, "error": f"Missing fields: {', '.join(missing_fields)}"}
+                        )
+                        continue
 
-            if failed_rows:
-                print(f"Some students could not be added: {failed_rows}")
-                return Response(
-                    {
-                        "message": "Some students could not be added",
-                        "errors": failed_rows,
-                    },
-                    status=400,
-                )
+                    student_data = {
+                        "student_name": student.get("student_name"),
+                        "student_id": student.get("student_id"),
+                        "is_hosteller": student.get("is_hosteller", False),
+                        "location": student.get("location", ""),
+                        "dept": student.get("dept"),
+                        "course": student.get("course"),
+                        "branch": student.get("branch"),
+                        "semester": student.get("semester"),
+                        "section": student["section"],
+                        "cgpa": student.get("cgpa", 0),
+                    }
 
-            return Response({"message": "All students added successfully"}, status=200)
+                    result = addStudent(**student_data)
+
+                    if result["status"] != "success":
+                        failed_rows.append({"row": index + 1, "error": result["message"]})
+                    else:
+                        sectioned_students[section_label].append(student_data)
+
+            response_data.append({
+                "file": file.name,
+                "message": "Students processed successfully",
+                "sections": sectioned_students,
+                "errors": failed_rows if failed_rows else None
+            })
 
         except Exception as e:
-            print(f"Error processing Excel file: {str(e)}")
-            return Response({"error": str(e)}, status=400)
+            response_data.append({"file": file.name, "error": str(e)})
 
-    return Response(serializer.errors, status=400)
-
+    return Response(response_data, status=200)
 
 @csrf_exempt
 def detectConflicts(request):
