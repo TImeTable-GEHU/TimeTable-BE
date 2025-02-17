@@ -5,6 +5,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from .views import (
     login,
+    updatePassword,
     getSpecificTeacher,
     getPendingRequests,
     approveSubjectRequests,
@@ -57,6 +58,7 @@ urlpatterns = [
     path("addTeacher/", addTeacher, name="add-Teacher"),
     path("updateTeacher/<int:pk>/", updateTeacher, name="update-Teacher"),
     path("deleteTeacher/<int:pk>/", deleteTeacher, name="delete-Teacher"),
+    path("updatePassword/", updatePassword, name="update-password"),
     # hod's apis
     path("getPendingRequests/", getPendingRequests, name="get-pending-requests"),
     path(

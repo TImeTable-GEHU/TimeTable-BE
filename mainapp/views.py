@@ -25,6 +25,7 @@ from Constants.is_conflict import IsConflict
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
 
 
 @api_view(["POST"])
@@ -70,41 +71,39 @@ def login(request):
     )
 
 
-@api_view(["GET"])
+@api_view(["PUT"])
 @permission_classes([IsAuthenticated])
-def getSpecificTeacher(request):
+def updatePassword(request):
     """
-    Retrieve the details of the authenticated teacher.
+    Allows a teacher to update their login password.
     """
     user = request.user
-    teacher = Teacher.objects.filter(user=user).first()
+    data = request.data
 
-    if not teacher:
-        return Response({"error": "Teacher account not found."}, status=404)
+    old_password = data.get("old_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+    confirm_password = data.get("confirm_password", "").strip()
 
-    subject_codes = TeacherSubject.get_teacher_subjects(teacher.teacher_code)
+    if not old_password or not new_password or not confirm_password:
+        return Response({"error": "All fields are required."}, status=400)
 
-    subject_names = list(
-        Subject.objects.filter(subject_code__in=subject_codes).values_list(
-            "subject_name", flat=True
+    if not check_password(old_password, user.password):
+        return Response({"error": "Old password is incorrect."}, status=400)
+
+    if new_password != confirm_password:
+        return Response(
+            {"error": "New password and confirm password do not match."}, status=400
         )
-    )
 
-    return Response(
-        {
-            "id": teacher.id,
-            "name": user.get_full_name(),
-            "email": user.email,
-            "teacher_code": teacher.teacher_code,
-            "teacher_type": teacher.teacher_type,
-            "phone": teacher.phone,
-            "department": teacher.department,
-            "designation": teacher.designation,
-            "working_days": teacher.working_days,
-            "preferred_subjects": subject_names,
-        },
-        status=200,
-    )
+    if len(new_password) < 8:
+        return Response(
+            {"error": "New password must be at least 8 characters long."}, status=400
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password updated successfully."}, status=200)
 
 
 def generateTimetable():
@@ -231,6 +230,43 @@ def getTeachers(request):
     teachers = Teacher.objects.all()
     serializer = TeacherSerializer(teachers, many=True)
     return Response(serializer.data, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def getSpecificTeacher(request):
+    """
+    Retrieve the details of the authenticated teacher.
+    """
+    user = request.user
+    teacher = Teacher.objects.filter(user=user).first()
+
+    if not teacher:
+        return Response({"error": "Teacher account not found."}, status=404)
+
+    subject_codes = TeacherSubject.get_teacher_subjects(teacher.teacher_code)
+
+    subject_names = list(
+        Subject.objects.filter(subject_code__in=subject_codes).values_list(
+            "subject_name", flat=True
+        )
+    )
+
+    return Response(
+        {
+            "id": teacher.id,
+            "name": user.get_full_name(),
+            "email": user.email,
+            "teacher_code": teacher.teacher_code,
+            "teacher_type": teacher.teacher_type,
+            "phone": teacher.phone,
+            "department": teacher.department,
+            "designation": teacher.designation,
+            "working_days": teacher.working_days,
+            "preferred_subjects": subject_names,
+        },
+        status=200,
+    )
 
 
 @api_view(["POST"])
@@ -474,7 +510,7 @@ def approveSubjectRequests(request):
                 # Get the teacher object
                 teacher = Teacher.objects.filter(
                     user__first_name=teacher_name.split()[0],
-                    user__last_name=teacher_name.split()[-1],
+                    user__last_name=" ".join(teacher_name.split()[1:]),
                     department=department,
                 ).first()
                 if teacher:
@@ -516,7 +552,7 @@ def getApprovedSubjects(request):
             return Response({"error": "Only HODs can access this data"}, status=403)
 
         teacher_subject_mapping = TeacherSubject.objects.get_or_create(id=1)[0]
-        approved_subjects = {}
+        approved_subjects = []
 
         for (
             subject_code,
@@ -527,10 +563,13 @@ def getApprovedSubjects(request):
                 subject_code=subject_code, department=hod.department
             ).first()
             if subject:
-                approved_subjects[subject_code] = [
-                    {"teacher_code": code, "teacher_name": get_teacher_name(code)}
-                    for code in teacher_codes
-                ]
+                approved_subjects.append(
+                    {
+                        "subject_code": subject_code,
+                        "subject_name": subject.subject_name,
+                        "teachers": [get_teacher_name(code) for code in teacher_codes],
+                    }
+                )
 
         return Response(approved_subjects, status=200)
     except Exception as e:
