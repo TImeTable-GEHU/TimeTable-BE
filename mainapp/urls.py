@@ -24,6 +24,7 @@ from .views import (
     generate_timetable,
     addStudentAPI,
     detectConflicts,
+    manualTimeTableUpload,
 )
 
 schema_view = get_schema_view(
@@ -78,4 +79,6 @@ urlpatterns = [
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
     # csv to chromosome
     path("addStudentAPI/", addStudentAPI, name="addStudentAPI"),
+    path("timetable/manual/upload", manualTimeTableUpload, name="manualTimeTableUpload"),
+
 ]

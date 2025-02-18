@@ -3,6 +3,8 @@ from pymongo.errors import ConnectionFailure, InvalidURI
 import os
 from urllib.parse import quote_plus
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class MongoDriver:
     def __init__(self):
@@ -13,10 +15,11 @@ class MongoDriver:
 
     def _setup_connection(self):
         try:
-            username = os.getenv("MONGO_USERNAME")
-            password = os.getenv("MONGO_PASSWORD")
-            db_name = os.getenv("MONGO_DB_NAME")
-            uri_template = os.getenv("MONGO_DB_URI_TEMPLATE")
+            username = os.getenv("MONGO_USERNAME", "mongoUser")
+            password = os.getenv("MONGO_PASSWORD", "mongo23")
+            db_name = os.getenv("MONGO_DB_NAME", "timetable_mongo_db")
+            uri_template = os.getenv("MONGO_DB_URI_TEMPLATE", f"mongodb+srv://{username}:{password}@cluster0.pzphh.mongodb.net/{db_name}?retryWrites=true&w=majority")
+            print(username, password, db_name, uri_template)
 
             if not username or not password or not db_name or not uri_template:
                 raise ValueError("MongoDB credentials or URI template are missing in environment variables")

@@ -98,15 +98,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "timetable.wsgi.application"
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_NAME"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "PORT": os.getenv("POSTGRES_PORT"),
-    },
+    'default': {
+         'ENGINE': 'django.db.backends.postgresql',
+         'NAME': os.getenv("POSTGRES_NAME", "timetable"),
+         'USER': os.getenv("POSTGRES_USER", "postgres"),
+         'PASSWORD': os.getenv("POSTGRES_PASSWORD", "password"),
+         'HOST': os.getenv("POSTGRES_HOST", "localhost"),
+         'PORT': os.getenv("POSTGRES_PORT", "5432"),
+    }
 }
+
+APPEND_SLASH = False
 
 # Email configurations
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")

@@ -51,7 +51,7 @@ def updateTimeTable(request):
         "semester": semester,
         "timetable": timetable,
         "chromosome": chromosome,
-        "last_updated": datetime.utcnow().isoformat()  # Add last updated timestamp
+        "last_updated": datetime.now().isoformat()  # Add last updated timestamp
     }
     mongo_driver.insert_one(current_collection, new_timetable_entry)
 

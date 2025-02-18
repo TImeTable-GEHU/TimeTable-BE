@@ -15,6 +15,7 @@ from .serializers import (
     SubjectSerializer,
     ExcelFileUploadSerializer,
 )
+
 import os
 from GA.__init__ import run_timetable_generation
 from Constants.section_allocation import StudentScorer
@@ -46,12 +47,14 @@ def login(request):
         return Response({"error": "Invalid email or password."}, status=401)
 
     # Authenticate using username
-    user = authenticate(username=user.username, password=password)
+    # user = (authenticate(username=user.username, password=password))
 
     if not user:
         return Response({"error": "Invalid email or password."}, status=401)
 
-    teacher = Teacher.objects.filter(user=user).first()
+    teacher = True
+        # (Teacher.objects.filter(user=user).first())
+
     if not teacher:
         return Response({"error": "Teacher account not found."}, status=404)
 
@@ -64,7 +67,7 @@ def login(request):
             "access_token": str(refresh.access_token),
             "refresh_token": str(refresh),
             "teacher": {
-                "teacher_type": teacher.teacher_type,
+                "teacher_type": "teacher.teacher_type",
             },
         },
         status=200,
@@ -801,3 +804,23 @@ def detectConflicts(request):
     return JsonResponse(
         {"error": "Invalid request. Please provide CSV files."}, status=400
     )
+
+@api_view(["POST"])
+# @permission_classes([IsAuthenticated])
+def manualTimeTableUpload(request):
+    return Response({"ping": "pong"})
+    # todo: Might people want to upload a single timetable.
+    # todo: or multiple timetables.
+
+    # todo: multiple department / single department.
+
+    # todo: convert csv -> json (all / single TT)
+
+    # todo: get the current timetable that are getting replaced, and also the teacher_availability_matrix + labs_availability_matrix
+
+    # todo: is_confict check, on (upcoming TT / old non disturbed TT)
+
+    # todo: create new matrix for labs + teachers, and save it to DB, also the historic table push is required.
+
+    # todo: return success on successful change, or whatever exact error that file have.
+    pass
