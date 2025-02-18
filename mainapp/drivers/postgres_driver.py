@@ -2,6 +2,8 @@ import psycopg2
 from datetime import datetime
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class PostgresDriver:
     def __init__(
@@ -17,11 +19,11 @@ class PostgresDriver:
         self.logger = logger
 
         self.db_config = {
-            "dbname": dbname or os.getenv("POSTGRES_NAME"),
-            "user": user or os.getenv("POSTGRES_USER"),
-            "host": host or os.getenv("POSTGRES_HOST"),
-            "password": password or os.getenv("POSTGRES_PASSWORD"),
-            "port": port or os.getenv("POSTGRES_PORT"),
+            "dbname": dbname or os.getenv("POSTGRES_NAME", "timetable"),
+            "user": user or os.getenv("POSTGRES_USER", "postgres"),
+            "host": host or os.getenv("POSTGRES_HOST", "localhost"),
+            "password": password or os.getenv("POSTGRES_PASSWORD", "password"),
+            "port": port or os.getenv("POSTGRES_PORT", "5432"),
             "options": options or "-c search_path=public",
             "sslmode": "disable",
         }
