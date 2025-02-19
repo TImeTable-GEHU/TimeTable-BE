@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Room, Teacher, Subject, TeacherSubject, Student
+
+from .models import Room, Student, Subject, Teacher, TeacherSubject
 
 admin.site.register(Room)
 admin.site.register(Teacher)
