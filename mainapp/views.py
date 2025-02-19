@@ -305,7 +305,6 @@ def addTeacher(request):
     user.set_password(raw_password)
     user.save()
 
-    # Create the Teacher linked to User
     teacher = Teacher.objects.create(
         user=user,
         phone=teacher_data.get("phone", ""),
@@ -318,42 +317,16 @@ def addTeacher(request):
 
     subject_names = teacher_data.get("preferred_subjects", [])
 
-    # Store subject preferences in SubjectPreference model
     for subject_name in subject_names:
         subject = Subject.objects.filter(subject_name=subject_name).first()
         if subject:
             SubjectPreference.add_preference(
-                subject.department, subject.subject_code, teacher_code
+                subject.department, subject.subject_code, teacher_code, full_name
             )
         else:
             return Response(
                 {"error": f"Subject '{subject_name}' not found."}, status=404
             )
-
-    # Send email with credentials
-    email_subject = "Your Teacher Account Credentials"
-    email_body = render_to_string(
-        "emails/teacher_confirmation_email.html",
-        {
-            "teacher_name": full_name,
-            "teacher_code": teacher_code,
-            "preferred_subjects": subject_names,
-            "email": email,
-            "password": raw_password,
-        },
-    )
-
-    try:
-        send_mail(
-            email_subject,
-            email_body,
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-            html_message=email_body,
-        )
-    except Exception as e:
-        return Response({"error": f"Failed to send email: {str(e)}"}, status=500)
 
     return Response(
         {"message": "Teacher added successfully, credentials sent via email."},
@@ -365,8 +338,7 @@ def addTeacher(request):
 @permission_classes([IsAuthenticated])
 def updateTeacher(request, pk):
     """
-    Update an existing teacher's details by ID, including preferred subjects.
-    The preferences are now stored in SubjectPreference for HOD approval.
+    Update an existing teacher's details by ID, including preferred subjects. The preferences are now stored in SubjectPreference for HOD approval.
     """
     try:
         teacher = Teacher.objects.get(id=pk)
@@ -380,7 +352,7 @@ def updateTeacher(request, pk):
             if "preferred_subjects" in request.data:
                 new_subject_names = request.data["preferred_subjects"]
                 teacher_name = teacher.user.get_full_name()
-                department = teacher.department
+                teacher_code = teacher.teacher_code
 
                 # Convert subject names to subject codes
                 subject_codes = []
@@ -396,17 +368,24 @@ def updateTeacher(request, pk):
 
                 # Store subject preferences for HOD approval
                 for subject_code in subject_codes:
+                    subject = Subject.objects.filter(subject_code=subject_code).first()
                     SubjectPreference.add_preference(
-                        department, subject_code, teacher_name
+                        Subject.department, subject_code, teacher_code, teacher_name
                     )
 
-            # Fetch updated subject preferences for response
-            updated_preferences = SubjectPreference.get_teacher_preferences(
-                teacher_name
-            )
             updated_subject_names = [
                 Subject.objects.get(subject_code=code).subject_name
                 for dept, subjects in updated_preferences.items()
+                for code in subjects.keys()
+            ]
+
+            # Fetch updated subject preferences for response
+            updated_preferences = SubjectPreference.get_teacher_preferences(
+                teacher_code
+            )
+            updated_subject_names = [
+                Subject.objects.get(subject_code=code).subject_name
+                for department, subjects in updated_preferences.items()
                 for code in subjects.keys()
             ]
 

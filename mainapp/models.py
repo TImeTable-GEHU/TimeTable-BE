@@ -84,144 +84,22 @@ class Subject(models.Model):
         return f"{self.subject_name} ({self.subject_code}) - {self.department} {self.semester} sem"
 
 
-# class SubjectPreference(models.Model):
-#     """
-#     Stores subject preference requests from teachers, waiting for HOD approval.
-#     """
-
-#     preferences = models.JSONField(default=dict)
-
-#     def __str__(self):
-#         return "Subject Preferences Mapping"
-
-#     @classmethod
-#     def add_preference(cls, department, subject_code, teacher_name):
-#         """
-#         Adds a teacher's subject preference request.
-#         """
-#         mapping, created = cls.objects.get_or_create(
-#             id=1
-#         )  # Ensuring a single-row model
-
-#         if department not in mapping.preferences:
-#             mapping.preferences[department] = {}
-
-#         if subject_code not in mapping.preferences[department]:
-#             mapping.preferences[department][subject_code] = []
-
-#         if teacher_name not in mapping.preferences[department][subject_code]:
-#             mapping.preferences[department][subject_code].append(teacher_name)
-
-#         mapping.save()
-
-#     @classmethod
-#     def remove_preference(cls, department, subject_code, teacher_name):
-#         """
-#         Removes a teacher's subject preference request.
-#         """
-#         try:
-#             mapping = cls.objects.get(id=1)
-#             if (
-#                 department in mapping.preferences
-#                 and subject_code in mapping.preferences[department]
-#                 and teacher_name in mapping.preferences[department][subject_code]
-#             ):
-#                 mapping.preferences[department][subject_code].remove(teacher_name)
-
-#                 # Remove subject if empty
-#                 if not mapping.preferences[department][subject_code]:
-#                     del mapping.preferences[department][subject_code]
-
-#                 # Remove department if empty
-#                 if not mapping.preferences[department]:
-#                     del mapping.preferences[department]
-
-#                 mapping.save()
-#         except cls.DoesNotExist:
-#             pass
-
-#     @classmethod
-#     def get_subject_preferences(cls, department):
-#         """
-#         Retrieves all subject preferences for a department.
-#         """
-#         try:
-#             mapping = cls.objects.get(id=1)
-#             return mapping.preferences.get(department, {})
-#         except cls.DoesNotExist:
-#             return {}
-
-#     @classmethod
-#     def get_teacher_preferences(cls, teacher_name):
-#         """
-#         Retrieves all subject preferences of a specific teacher.
-#         """
-#         try:
-#             mapping = cls.objects.get(id=1)
-#             teacher_prefs = {}
-
-#             for department, subjects in mapping.preferences.items():
-#                 for subject_code, teachers in subjects.items():
-#                     if teacher_name in teachers:
-#                         if department not in teacher_prefs:
-#                             teacher_prefs[department] = {}
-#                         teacher_prefs[department][subject_code] = teachers
-
-#             return teacher_prefs
-#         except cls.DoesNotExist:
-#             return {}
-
-
-# @receiver(post_delete, sender=Teacher)
-# def remove_teacher_from_preferences(sender, instance, **kwargs):
-#     """
-#     Removes the teacher from the SubjectPreference mapping when they are deleted.
-#     """
-#     teacher_name = instance.user.get_full_name()
-
-#     try:
-#         mapping = SubjectPreference.objects.get(id=1)
-#         updated = False
-
-#         for department in list(mapping.preferences.keys()):
-#             for subject_code in list(mapping.preferences[department].keys()):
-#                 if teacher_name in mapping.preferences[department][subject_code]:
-#                     mapping.preferences[department][subject_code].remove(teacher_name)
-#                     updated = True
-
-#                     # Remove the subject if no more teachers have requested it
-#                     if not mapping.preferences[department][subject_code]:
-#                         del mapping.preferences[department][subject_code]
-
-#             # Remove the department if it has no more subjects
-#             if not mapping.preferences[department]:
-#                 del mapping.preferences[department]
-
-#         if updated:
-#             mapping.save()
-
-#     except SubjectPreference.DoesNotExist:
-#         pass  # No mapping exists yet
-
-
 class SubjectPreference(models.Model):
     """
     Stores subject preference requests from teachers, waiting for HOD approval.
     """
-
+    
     preferences = models.JSONField(default=dict)
 
     def __str__(self):
         return "Subject Preferences Mapping"
 
     @classmethod
-    def add_preference(cls, department, subject_code, teacher_code):
+    def add_preference(cls, department, subject_code, teacher_code, teacher_name):
         """
-        Adds a teacher's subject preference request using teacher_code instead of name.
+        Adds a teacher's subject preference request using teacher_code and teacher_name.
         """
-        mapping, created = cls.objects.get_or_create(
-            id=1
-        )  # Ensuring a single-row model
+        mapping, created = cls.objects.get_or_create(id=1)  # Ensuring a single-row model
 
         if department not in mapping.preferences:
             mapping.preferences[department] = {}
@@ -229,9 +107,10 @@ class SubjectPreference(models.Model):
         if subject_code not in mapping.preferences[department]:
             mapping.preferences[department][subject_code] = []
 
-        # Ensure only teacher_code is stored
-        if teacher_code not in mapping.preferences[department][subject_code]:
-            mapping.preferences[department][subject_code].append(teacher_code)
+        # Ensure teacher_code is stored along with teacher_name
+        teacher_entry = {teacher_code: teacher_name}
+        if teacher_entry not in mapping.preferences[department][subject_code]:
+            mapping.preferences[department][subject_code].append(teacher_entry)
 
         mapping.save()
 
@@ -245,9 +124,13 @@ class SubjectPreference(models.Model):
             if (
                 department in mapping.preferences
                 and subject_code in mapping.preferences[department]
-                and teacher_code in mapping.preferences[department][subject_code]
             ):
-                mapping.preferences[department][subject_code].remove(teacher_code)
+                
+                # Remove the teacher entry
+                mapping.preferences[department][subject_code] = [
+                    entry for entry in mapping.preferences[department][subject_code]
+                    if teacher_code not in entry
+                ]
 
                 # Remove subject if empty
                 if not mapping.preferences[department][subject_code]:
@@ -282,23 +165,25 @@ class SubjectPreference(models.Model):
             teacher_prefs = {}
 
             for department, subjects in mapping.preferences.items():
-                for subject_code, teacher_codes in subjects.items():
-                    if teacher_code in teacher_codes:
-                        if department not in teacher_prefs:
-                            teacher_prefs[department] = {}
-                        teacher_prefs[department][subject_code] = teacher_codes
+                for subject_code, teacher_list in subjects.items():
+                    for teacher_entry in teacher_list:
+                        if teacher_code in teacher_entry:
+                            if department not in teacher_prefs:
+                                teacher_prefs[department] = {}
+                            if subject_code not in teacher_prefs[department]:
+                                teacher_prefs[department][subject_code] = []
+                            teacher_prefs[department][subject_code].append(teacher_entry)
 
             return teacher_prefs
         except cls.DoesNotExist:
             return {}
-
 
 @receiver(post_delete, sender=Teacher)
 def remove_teacher_from_preferences(sender, instance, **kwargs):
     """
     Removes the teacher from the SubjectPreference mapping when they are deleted.
     """
-    teacher_code = instance.teacher_code  # Ensure we remove using teacher_code
+    teacher_code = instance.teacher_code
 
     try:
         mapping = SubjectPreference.objects.get(id=1)
@@ -306,21 +191,21 @@ def remove_teacher_from_preferences(sender, instance, **kwargs):
 
         for department in list(mapping.preferences.keys()):
             for subject_code in list(mapping.preferences[department].keys()):
-                if teacher_code in mapping.preferences[department][subject_code]:
-                    mapping.preferences[department][subject_code].remove(teacher_code)
-                    updated = True
+                
+                # Remove the teacher entry
+                mapping.preferences[department][subject_code] = [
+                    entry for entry in mapping.preferences[department][subject_code]
+                    if teacher_code not in entry
+                ]
 
-                    # Remove the subject if no more teachers have requested it
-                    if not mapping.preferences[department][subject_code]:
-                        del mapping.preferences[department][subject_code]
+                if not mapping.preferences[department][subject_code]:
+                    del mapping.preferences[department][subject_code]
 
-            # Remove the department if it has no more subjects
             if not mapping.preferences[department]:
                 del mapping.preferences[department]
 
         if updated:
             mapping.save()
-
     except SubjectPreference.DoesNotExist:
         pass  # No mapping exists yet
 
