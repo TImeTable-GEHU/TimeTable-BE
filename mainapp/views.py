@@ -323,7 +323,7 @@ def addTeacher(request):
         subject = Subject.objects.filter(subject_name=subject_name).first()
         if subject:
             SubjectPreference.add_preference(
-                subject.department, subject.subject_code, full_name
+                subject.department, subject.subject_code, teacher_code
             )
         else:
             return Response(
@@ -452,7 +452,6 @@ def getPendingRequests(request):
     API to fetch pending subject-teacher requests for a department.
     """
 
-    # Get HOD's department from the request user
     try:
         hod = Teacher.objects.get(user=request.user, teacher_type="hod")
         department = hod.department
@@ -499,20 +498,16 @@ def approveSubjectRequests(request):
     try:
         approved_requests = (
             request.data
-        )  # Dictionary with subject_code -> list of teacher names
+        )  # Dictionary with subject_code -> list of teacher codes
         teacher_mapping = TeacherSubject.objects.get_or_create(id=1)[0]
 
         hod = Teacher.objects.get(user=request.user)
         department = hod.department
 
-        for subject_code, teacher_names in approved_requests.items():
-            for teacher_name in teacher_names:
+        for subject_code, teacher_codes in approved_requests.items():
+            for teacher_code in teacher_codes:
                 # Get the teacher object
-                teacher = Teacher.objects.filter(
-                    user__first_name=teacher_name.split()[0],
-                    user__last_name=" ".join(teacher_name.split()[1:]),
-                    department=department,
-                ).first()
+                teacher = Teacher.objects.filter(teacher_code=teacher_code).first()
                 if teacher:
                     teacher_mapping.add_teacher_to_subject(
                         subject_code, teacher.teacher_code
