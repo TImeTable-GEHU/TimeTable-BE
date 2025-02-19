@@ -541,7 +541,9 @@ def getApprovedSubjects(request):
                     {
                         "subject_code": subject_code,
                         "subject_name": subject.subject_name,
-                        "teachers": [get_teacher_name(code) for code in teacher_codes],
+                        "teachers": [
+                            {code: get_teacher_name(code)} for code in teacher_codes
+                        ],
                     }
                 )
 
