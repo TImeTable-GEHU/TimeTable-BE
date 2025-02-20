@@ -370,14 +370,8 @@ def updateTeacher(request, pk):
                 for subject_code in subject_codes:
                     subject = Subject.objects.filter(subject_code=subject_code).first()
                     SubjectPreference.add_preference(
-                        Subject.department, subject_code, teacher_code, teacher_name
+                        subject.department, subject_code, teacher_code, teacher_name
                     )
-
-            updated_subject_names = [
-                Subject.objects.get(subject_code=code).subject_name
-                for dept, subjects in updated_preferences.items()
-                for code in subjects.keys()
-            ]
 
             # Fetch updated subject preferences for response
             updated_preferences = SubjectPreference.get_teacher_preferences(
