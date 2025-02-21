@@ -1,9 +1,5 @@
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Room, Teacher, Subject, TeacherSubject, Student, SubjectPreference
@@ -26,6 +22,35 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password
+import asyncio
+from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+import threading
+
+
+def send_email_async(subject, template_name, context, recipient_email):
+    """
+    Sends an email asynchronously using a separate thread.
+    """
+
+    def send():
+        html_content = render_to_string(template_name, context)  # Render HTML template
+        text_content = strip_tags(html_content)  # Remove HTML tags for plain-text email
+
+        email = EmailMultiAlternatives(
+            subject,
+            text_content,
+            None,  # Uses default email sender from settings
+            [recipient_email],
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+
+    thread = threading.Thread(target=send)
+    thread.start()
 
 
 @api_view(["POST"])
@@ -45,7 +70,6 @@ def login(request):
     if not user:
         return Response({"error": "Invalid email or password."}, status=401)
 
-    # Authenticate using username
     user = authenticate(username=user.username, password=password)
 
     if not user:
@@ -69,41 +93,6 @@ def login(request):
         },
         status=200,
     )
-
-
-@api_view(["PUT"])
-@permission_classes([IsAuthenticated])
-def updatePassword(request):
-    """
-    Allows a teacher to update their login password.
-    """
-    user = request.user
-    data = request.data
-
-    old_password = data.get("old_password", "").strip()
-    new_password = data.get("new_password", "").strip()
-    confirm_password = data.get("confirm_password", "").strip()
-
-    if not old_password or not new_password or not confirm_password:
-        return Response({"error": "All fields are required."}, status=400)
-
-    if not check_password(old_password, user.password):
-        return Response({"error": "Old password is incorrect."}, status=400)
-
-    if new_password != confirm_password:
-        return Response(
-            {"error": "New password and confirm password do not match."}, status=400
-        )
-
-    if len(new_password) < 8:
-        return Response(
-            {"error": "New password must be at least 8 characters long."}, status=400
-        )
-
-    user.set_password(new_password)
-    user.save()
-
-    return Response({"message": "Password updated successfully."}, status=200)
 
 
 def generateTimetable():
@@ -263,7 +252,7 @@ def getSpecificTeacher(request):
             "department": teacher.department,
             "designation": teacher.designation,
             "working_days": teacher.working_days,
-            "preferred_subjects": subject_names,
+            "assigned_subjects": subject_names,
         },
         status=200,
     )
@@ -316,7 +305,6 @@ def addTeacher(request):
     )
 
     subject_names = teacher_data.get("preferred_subjects", [])
-
     for subject_name in subject_names:
         subject = Subject.objects.filter(subject_name=subject_name).first()
         if subject:
@@ -328,6 +316,23 @@ def addTeacher(request):
                 {"error": f"Subject '{subject_name}' not found."}, status=404
             )
 
+    # Prepare email context
+    email_context = {
+        "teacher_name": full_name,
+        "preferred_subjects": subject_names,
+        "teacher_code": teacher_code,
+        "email": email,
+        "password": raw_password,
+    }
+
+    # Send email asynchronously using threading
+    send_email_async(
+        subject="Your Teacher Account Credentials",
+        template_name="teacher_confirmation_email.html",
+        context=email_context,
+        recipient_email=email,
+    )
+
     return Response(
         {"message": "Teacher added successfully, credentials sent via email."},
         status=201,
@@ -338,7 +343,7 @@ def addTeacher(request):
 @permission_classes([IsAuthenticated])
 def updateTeacher(request, pk):
     """
-    Update an existing teacher's details by ID, including preferred subjects. The preferences are now stored in SubjectPreference for HOD approval.
+    Update an existing teacher's details by ID.
     """
     try:
         teacher = Teacher.objects.get(id=pk)
@@ -349,39 +354,13 @@ def updateTeacher(request, pk):
         if serializer.is_valid():
             serializer.save()
 
-            if "preferred_subjects" in request.data:
-                new_subject_names = request.data["preferred_subjects"]
-                teacher_name = teacher.user.get_full_name()
-                teacher_code = teacher.teacher_code
+            subject_codes = TeacherSubject.get_teacher_subjects(teacher.teacher_code)
 
-                # Convert subject names to subject codes
-                subject_codes = []
-                for subject_name in new_subject_names:
-                    subject = Subject.objects.filter(subject_name=subject_name).first()
-                    if subject:
-                        subject_codes.append(subject.subject_code)
-                    else:
-                        return Response(
-                            {"error": f"Subject '{subject_name}' not found."},
-                            status=404,
-                        )
-
-                # Store subject preferences for HOD approval
-                for subject_code in subject_codes:
-                    subject = Subject.objects.filter(subject_code=subject_code).first()
-                    SubjectPreference.add_preference(
-                        subject.department, subject_code, teacher_code, teacher_name
-                    )
-
-            # Fetch updated subject preferences for response
-            updated_preferences = SubjectPreference.get_teacher_preferences(
-                teacher_code
+            subject_names = list(
+                Subject.objects.filter(subject_code__in=subject_codes).values_list(
+                    "subject_name", flat=True
+                )
             )
-            updated_subject_names = [
-                Subject.objects.get(subject_code=code).subject_name
-                for department, subjects in updated_preferences.items()
-                for code in subjects.keys()
-            ]
 
             return Response(
                 {
@@ -393,7 +372,7 @@ def updateTeacher(request, pk):
                     "department": teacher.department,
                     "designation": teacher.designation,
                     "working_days": teacher.working_days,
-                    "preferred_subjects": updated_subject_names,
+                    "assigned_subjects": subject_names,
                 },
                 status=200,
             )
@@ -418,6 +397,41 @@ def deleteTeacher(request, pk):
         return Response({"error": "Teacher not found"}, status=404)
 
 
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def updatePassword(request):
+    """
+    Allows a teacher to update their login password.
+    """
+    user = request.user
+    data = request.data
+
+    old_password = data.get("old_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+    confirm_password = data.get("confirm_password", "").strip()
+
+    if not old_password or not new_password or not confirm_password:
+        return Response({"error": "All fields are required."}, status=400)
+
+    if not check_password(old_password, user.password):
+        return Response({"error": "Old password is incorrect."}, status=400)
+
+    if new_password != confirm_password:
+        return Response(
+            {"error": "New password and confirm password do not match."}, status=400
+        )
+
+    if len(new_password) < 8:
+        return Response(
+            {"error": "New password must be at least 8 characters long."}, status=400
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password updated successfully."}, status=200)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getPendingRequests(request):
@@ -431,15 +445,15 @@ def getPendingRequests(request):
     except Teacher.DoesNotExist:
         return Response({"error": "HOD access required"}, status=403)
 
-    # 1. Fetch all subjects in the department
+    # Fetch all subjects in the department
     subjects = Subject.objects.filter(department=department).values(
         "subject_name", "subject_code"
     )
 
-    # 2. Fetch requested subject-teacher mappings
+    # Fetch requested subject-teacher mappings
     pending_requests = SubjectPreference.get_subject_preferences(department)
 
-    # 3️. Fetch all teachers in the department
+    # Fetch all teachers in the department
     teachers = Teacher.objects.filter(department=department).values(
         "user__first_name", "user__last_name", "teacher_code"
     )
@@ -466,33 +480,87 @@ def getPendingRequests(request):
 @permission_classes([IsAuthenticated])
 def approveSubjectRequests(request):
     """
-    Approves the selected subject requests by the HOD and updates TeacherSubject mapping.
+    Approves the selected subject requests by the HOD and updates TeacherSubject mapping. Sends an email notification to teachers about approved and rejected subjects asynchronously.
     """
     try:
-        approved_requests = (
-            request.data
-        )  # Dictionary with subject_code -> list of teacher codes
+        approved_requests = request.data
+        # Dictionary with subject_code -> list of teacher codes
         teacher_mapping = TeacherSubject.objects.get_or_create(id=1)[0]
 
         hod = Teacher.objects.get(user=request.user)
-        department = hod.department
+        hod_name = hod.user.get_full_name()
+        department_name = hod.department
 
+        subject_pref = SubjectPreference.objects.get_or_create(id=1)[0]
+        department_preferences = subject_pref.preferences.get(department_name, {})
+
+        approved_teachers = set()
+        rejected_teachers = {}
+
+        approved_subjects_per_teacher = {}
+
+        # Approve subjects and track approved teachers
         for subject_code, teacher_codes in approved_requests.items():
             for teacher_code in teacher_codes:
-                # Get the teacher object
                 teacher = Teacher.objects.filter(teacher_code=teacher_code).first()
                 if teacher:
                     teacher_mapping.add_teacher_to_subject(
                         subject_code, teacher.teacher_code
                     )
+                    approved_teachers.add((teacher_code, subject_code))
+                    approved_subjects_per_teacher.setdefault(teacher_code, []).append(
+                        subject_code
+                    )
+
+        # Identify rejected subjects per teacher
+        for subject_code, teacher_list in department_preferences.items():
+            for teacher_entry in teacher_list:
+                for teacher_code in teacher_entry.keys():
+                    if (teacher_code, subject_code) not in approved_teachers:
+                        rejected_teachers.setdefault(teacher_code, []).append(
+                            subject_code
+                        )
 
         # Remove all subject preferences for the department
-        subject_pref = SubjectPreference.objects.get_or_create(id=1)[0]
-        if department in subject_pref.preferences:
-            del subject_pref.preferences[department]
+        if department_name in subject_pref.preferences:
+            del subject_pref.preferences[department_name]
             subject_pref.save()
 
-        return Response({"message": "Subjects approved successfully!"}, status=200)
+        # Send emails asynchronously
+        for teacher_code in set(
+            list(approved_subjects_per_teacher.keys()) + list(rejected_teachers.keys())
+        ):
+            teacher = Teacher.objects.filter(teacher_code=teacher_code).first()
+            if teacher and teacher.user.email:
+
+                approved_subjects = [
+                    Subject.objects.get(subject_code=sub).subject_name
+                    for sub in approved_subjects_per_teacher.get(teacher_code, [])
+                ]
+
+                rejected_subjects = [
+                    Subject.objects.get(subject_code=sub).subject_name
+                    for sub in rejected_teachers.get(teacher_code, [])
+                ]
+
+                email_context = {
+                    "teacher_name": teacher.user.get_full_name(),
+                    "approved_subjects": approved_subjects,
+                    "rejected_subjects": rejected_subjects,
+                    "hod_name": hod_name,
+                    "department_name": department_name,
+                }
+
+                send_email_async(
+                    subject="Subject Preference Approval Status",
+                    template_name="subject_approval_email.html",
+                    context=email_context,
+                    recipient_email=teacher.user.email,
+                )
+
+        return Response(
+            {"message": "Subjects approved and emails sent successfully!"}, status=200
+        )
 
     except Teacher.DoesNotExist:
         return Response({"error": "HOD not found or unauthorized"}, status=403)
