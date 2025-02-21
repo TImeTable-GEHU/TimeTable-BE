@@ -368,22 +368,152 @@ def detect_conflicts(request):
 
 @api_view(["POST"])
 # @permission_classes([IsAuthenticated])
+from datetime import datetime
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import JsonResponse
+import json
+
+from ..drivers.mongo import MongoDriver
+from Constants.is_conflict import IsConflict
+
+mongo_driver = MongoDriver()
+
+@api_view(["POST"])
 def manual_timetable_upload(request):
-    return Response({"ping": "pong"})
-    # todo: I can have a clash in teacher, and classroom. Check that as well.
+    """
+    Uploads new timetables, updates historical timetables, checks for conflicts, and updates availability matrices.
+    """
+    try:
+        new_timetables = request.data  # Expecting JSON {courseid_year: {Chromosome structure}}
 
-    # todo: Might people want to upload a single timetable.
-    # todo: or multiple timetables.
+        # Fetch all existing chromosomes from historical timetables
+        historical_timetables = get_all_chromosomes()
 
-    # todo: multiple department / single department.
+        # Update historical timetables with new timetables
+        updated_historical_timetables = update_historical_timetables(historical_timetables, new_timetables)
 
-    # todo: convert csv -> json (all / single TT)
+        # Check for conflicts
+        has_conflicts, conflict_details = detect_conflicts_and_finalize(updated_historical_timetables)
 
-    # todo: get the current timetable that are getting replaced, and also the teacher_availability_matrix + labs_availability_matrix
+        if has_conflicts:
+            return JsonResponse({"error": "Conflict detected", "details": conflict_details}, status=400)
 
-    # todo: is_confict check, on (upcoming TT / old non disturbed TT)
+        # Reset teacher and lab availability matrices to all `True`
+        reset_availability_matrices()
 
-    # todo: create new matrix for labs + teachers, and save it to DB, also the historic table push is required.
+        # Update availability matrices based on the updated historical timetable
+        update_availability_matrices(updated_historical_timetables)
 
-    # todo: return success on successful change, or whatever exact error that file have.
-    pass
+        return JsonResponse({"message": "Timetable uploaded successfully and matrices updated."}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Failed to upload timetables: {str(e)}"}, status=500)
+
+
+def get_all_chromosomes():
+    """
+    Retrieves all chromosome structures from historical timetables.
+    """
+    historical_timetables = list(mongo_driver.find("historical_timetable", {}))
+    return {f"{doc['course_id']}_{doc['semester']}": doc["chromosome"] for doc in historical_timetables}
+
+
+def update_historical_timetables(historical_timetables, new_timetables):
+    """
+    Updates historical timetables by replacing corresponding chromosomes with the new ones.
+    """
+    for key, new_chromosome in new_timetables.items():
+        if key in historical_timetables:
+            historical_timetables[key] = new_chromosome  # Overwrite old chromosome
+
+            # Update in MongoDB
+            course_id, semester = key.split("_")
+            mongo_driver.update_one(
+                "historical_timetable",
+                {"course_id": int(course_id), "semester": int(semester)},
+                {"$set": {"chromosome": new_chromosome, "last_updated": datetime.utcnow().isoformat()}}
+            )
+    
+    return historical_timetables
+
+
+def detect_conflicts_and_finalize(updated_historical_timetables):
+    """
+    Detects conflicts between the updated historical timetables.
+    """
+    conflict_checker = IsConflict()
+    conflict_results = []
+    has_conflicts = False
+
+    keys = list(updated_historical_timetables.keys())
+    for i in range(len(keys)):
+        for j in range(i + 1, len(keys)):
+            course1, course2 = keys[i], keys[j]
+            conflicts = conflict_checker.process_schedules(updated_historical_timetables[course1], updated_historical_timetables[course2])
+
+            if conflicts:
+                has_conflicts = True
+                conflict_results.append({"course_1": course1, "course_2": course2, "conflict_details": conflicts})
+
+    return has_conflicts, conflict_results
+
+
+def reset_availability_matrices():
+    """
+    Resets teacher and lab availability matrices to all `True`.
+    """
+    teacher_matrices = list(mongo_driver.find("teacher_availability_matrix", {}))
+    for doc in teacher_matrices:
+        mongo_driver.update_one(
+            "teacher_availability_matrix",
+            {"_id": doc["_id"]},
+            {"$set": {"matrix": [[True] * 7 for _ in range(5)]}}
+        )
+
+    mongo_driver.update_one(
+        "lab_availability_matrix",
+        {},
+        {"$set": {"matrix": {lab: [[True] * 7 for _ in range(5)] for lab in ["L1", "L2", "L3", "L4", "L5", "L6"]}}}
+    )
+
+
+def update_availability_matrices(updated_historical_timetables):
+    """
+    Updates teacher and lab availability matrices based on the updated historical timetable.
+    """
+    # Fetch teacher and lab matrices
+    teacher_matrices = {doc["department_name"]: doc["matrix"] for doc in mongo_driver.find("teacher_availability_matrix", {})}
+    lab_matrix = mongo_driver.find_one("lab_availability_matrix", {}).get("matrix", {})
+
+    for key, timetable in updated_historical_timetables.items():
+        course_id, semester = key.split("_")
+
+        for entry in timetable:  # Each entry represents a scheduled class
+            teacher_id = entry["teacher_id"]
+            lab_id = entry.get("lab_id")
+            day, slot = entry["day"], entry["time_slot"]
+
+            # Update teacher availability
+            for department, matrix in teacher_matrices.items():
+                if teacher_id in matrix:
+                    matrix[teacher_id][day][slot] = False
+
+            # Update lab availability if applicable
+            if lab_id and lab_id in lab_matrix:
+                lab_matrix[lab_id][day][slot] = False
+
+    # Save updated matrices back to MongoDB
+    for department, matrix in teacher_matrices.items():
+        mongo_driver.update_one(
+            "teacher_availability_matrix",
+            {"department_name": department},
+            {"$set": {"matrix": matrix}}
+        )
+
+    mongo_driver.update_one(
+        "lab_availability_matrix",
+        {},
+        {"$set": {"matrix": lab_matrix}}
+    )
