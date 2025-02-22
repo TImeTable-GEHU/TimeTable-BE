@@ -1,3 +1,5 @@
+import csv
+import os
 from datetime import datetime
 
 from Constants.constant import Defaults
@@ -162,13 +164,14 @@ def generate_timetable(request):
                 status=400
             )
 
+        total_sections = {"A": 70, "B": 100, "C": 75, "D": 100}
         timetable, updated_teacher_availability_matrix, updated_lab_availability_matrix = generate_timetable_from_ga(
             lab_availability_matrix=lab_availability_matrix,
             teacher_availability_matrix=teacher_availability_matrix,
             course_id=course_id,
             semester=semester,
             teacher_subject_mapping=teacher_subject_mapping,
-            total_sections={"A": 70, "B": 100, "C": 75, "D": 100},
+            total_sections=total_sections,
             total_classrooms={"R1": 200, "R2": 230, "R3": 240, "R4": 250, "R5": 250},
             total_labs={"L1": 70, "L2": 50, "L3": 70, "L4": 50, "L5": 70, "L6": 50},
             teacher_preferences=TeacherWorkload.teacher_preferences,
@@ -218,10 +221,70 @@ def generate_timetable(request):
             {"$set": {"matrix": updated_teacher_availability_matrix}}
         )
 
-        return Response(
-            timetable,
-            status=200
-        )
+        csv_time_slots = [
+            "09:00-9:55", "9:55-10:50", "10:50-11:00", "11:00-11:55",
+            "11:55-12:50", "12:50-1:20", "1:20-2:15", "2:15-3:10",
+            "3:10-4:05", "4:05-5:00"
+        ]
+        days_order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+
+        # Use department and course_id to create a base filename
+        base_filename = f"{department}-{course_id}"
+        csv_dir = os.path.join("static", "csvs")
+        os.makedirs(csv_dir, exist_ok=True)
+
+        # Determine all sections available in the timetable JSON
+        sections = set()
+        for day, sec_data in timetable.items():
+            for sec in sec_data.keys():
+                sections.add(sec)
+        sections = sorted(sections)
+
+        # Generate CSV for each section in the desired layout
+        for sec in sections:
+            rows = []
+            header = ["DAY \\ TIME"] + csv_time_slots
+            rows.append(header)
+
+            for day in days_order:
+                # Get lessons for the day & section; use day.capitalize() to match JSON keys
+                lessons = timetable.get(day.capitalize(), {}).get(sec, [])
+                # Build a mapping from normalized time slot (without spaces) to lesson
+                slot_map = {lesson["time_slot"].replace(" ", ""): lesson for lesson in lessons}
+
+                # Prepare subject row (with day name) and teacher row (first column empty)
+                subject_row = [day]
+                teacher_row = [""]
+                for ts in csv_time_slots:
+                    if ts in slot_map:
+                        lesson = slot_map[ts]
+                        subject_row.append(lesson["subject_id"])
+                        teacher_row.append(lesson["teacher_id"])
+                    else:
+                        subject_row.append("")
+                        teacher_row.append("")
+                rows.append(subject_row)
+                rows.append(teacher_row)
+
+            file_path = os.path.join(csv_dir, f"{base_filename}-{sec}.csv")
+            # Overwrite an existing file
+            with open(file_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerows(rows)
+
+        sections_with_links = {}
+        for sec, total in total_sections.items():
+            file_name = f"{department}-{course_id}-{sec}.csv"
+            download_link = request.build_absolute_uri(f"/static/csvs/{file_name}")
+            sections_with_links[sec] = {
+                "section_strength": total,
+                "download_link": download_link
+            }
+
+        return Response({
+            "timetable": timetable,
+            "sections": sections_with_links
+        }, status=200)
 
     except Exception as e:
         return Response({"error": f"Failed to generate timetable: {str(e)}"}, status=500)

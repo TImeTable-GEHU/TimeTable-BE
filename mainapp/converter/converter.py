@@ -91,3 +91,15 @@ def json_to_csv(json_file, csv_file):
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(rows)
+
+
+if __name__ == "__main__":
+    # Convert CSV to JSON
+    with open("samples/timetable.csv", "rb") as f:
+        json_data = csv_to_json(f)
+    print(json_data)
+    with open("samples/timetable.json", "w", encoding="utf-8") as out_json:
+        out_json.write(json_data)
+
+    # Convert JSON back to CSV
+    json_to_csv("timetable.json", "converted_timetable.csv")
