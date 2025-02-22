@@ -95,6 +95,111 @@ def generate_timetable_from_ga(
     return timetable, correct_teacher_availability_matrix, correct_lab_availability_matrix
 
 
+def get_lab_availability_matrix():
+    lab_doc = mongo_driver.find_one("lab_availability_matrix", {})
+    if lab_doc:
+        return lab_doc.get("matrix")
+
+    matrix = {
+        "L1": [[True] * 7 for _ in range(5)],
+        "L2": [[True] * 7 for _ in range(5)],
+        "L3": [[True] * 7 for _ in range(5)],
+        "L4": [[True] * 7 for _ in range(5)],
+        "L5": [[True] * 7 for _ in range(5)],
+        "L6": [[True] * 7 for _ in range(5)]
+    }
+    mongo_driver.insert_one("lab_availability_matrix", {"matrix": matrix})
+    return matrix
+
+
+def get_teacher_availability_matrix(department):
+    teacher_doc = mongo_driver.find_one(
+        "teacher_availability_matrix",
+        {
+            "department_name": department
+        }
+    )
+
+    if teacher_doc:
+        return teacher_doc.get("matrix")
+
+    teacher_ids = list(TeacherWorkload.Weekly_workLoad.keys())
+    matrix = initialize_teacher_availability(teacher_ids, 5, 7)
+    mongo_driver.insert_one(
+        "teacher_availability_matrix",
+        {
+            "department_name": department,
+            "matrix": matrix
+        }
+    )
+
+    return matrix
+
+
+def get_teacher_subject_mapping():
+    query = "SELECT subject_teacher_map FROM mainapp_teachersubject;"
+    result = pg_driver.execute_query(query)
+
+    if result:
+        subject_teacher_map_str = str(result[0][0])
+        valid_json_str = subject_teacher_map_str.replace("'", '"')
+        return json.loads(valid_json_str)
+
+    return None
+
+
+def generate_csv_files(timetable, department, course_id):
+    csv_time_slots = [
+        "09:00-9:55", "9:55-10:50", "10:50-11:00", "11:00-11:55",
+        "11:55-12:50", "12:50-1:20", "1:20-2:15", "2:15-3:10",
+        "3:10-4:05", "4:05-5:00"
+    ]
+
+    days_order = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ]
+
+    base_filename = f"{department}-{course_id}"
+    csv_dir = os.path.join("static", "csvs")
+    os.makedirs(csv_dir, exist_ok=True)
+
+    sections = set()
+    for day, sec_data in timetable.items():
+        for sec in sec_data.keys():
+            sections.add(sec)
+    sections = sorted(sections)
+
+    for sec in sections:
+        rows = []
+        header = ["DAY \\ TIME"] + csv_time_slots
+        rows.append(header)
+        for day in days_order:
+            lessons = timetable.get(day.capitalize(), {}).get(sec, [])
+            slot_map = {lesson["time_slot"].replace(" ", ""): lesson for lesson in lessons}
+            subject_row = [day]
+            teacher_row = [""]
+            for ts in csv_time_slots:
+                if ts in slot_map:
+                    lesson = slot_map[ts]
+                    subject_row.append(lesson["subject_id"])
+                    teacher_row.append(lesson["teacher_id"])
+                else:
+                    subject_row.append("")
+                    teacher_row.append("")
+            rows.append(subject_row)
+            rows.append(teacher_row)
+        file_path = os.path.join(csv_dir, f"{base_filename}-{sec}.csv")
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerows(rows)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def generate_timetable(request):
@@ -104,64 +209,25 @@ def generate_timetable(request):
         semester = data.get("semester")
         department = data.get("department")
 
-        if not course_id or not semester or not department:
-            return Response({
-                "error": "course_id, semester and department are required."},
-                status=400
+        if not (course_id and semester and department):
+            return Response(
+                {
+                    "error": "course_id, semester and department are required."
+                }
+                ,
+                status = 400
             )
 
-        lab_doc = mongo_driver.find_one(
-            "lab_availability_matrix",
-            {}
-        )
+        lab_availability_matrix = get_lab_availability_matrix()
+        teacher_availability_matrix = get_teacher_availability_matrix(department)
+        teacher_subject_mapping = get_teacher_subject_mapping()
 
-        if lab_doc:
-            lab_availability_matrix = lab_doc.get("matrix")
-        else:
-            lab_availability_matrix = {
-                "L1": [[True] * 7 for _ in range(5)],
-                "L2": [[True] * 7 for _ in range(5)],
-                "L3": [[True] * 7 for _ in range(5)],
-                "L4": [[True] * 7 for _ in range(5)],
-                "L5": [[True] * 7 for _ in range(5)],
-                "L6": [[True] * 7 for _ in range(5)]
-            }
-
-            mongo_driver.insert_one("lab_availability_matrix", {
-                "matrix": lab_availability_matrix
-            })
-
-        teacher_doc = mongo_driver.find_one(
-            "teacher_availability_matrix",
-            {
-                "department_name": department
-            }
-        )
-
-        if teacher_doc:
-            teacher_availability_matrix = teacher_doc.get("matrix")
-
-        else:
-            teacher_ids = list(TeacherWorkload.Weekly_workLoad.keys())
-            teacher_availability_matrix = initialize_teacher_availability(teacher_ids, 5, 7)
-            mongo_driver.insert_one("teacher_availability_matrix", {
-                "department_name": department,
-                "matrix": teacher_availability_matrix
-            })
-
-        query = "SELECT subject_teacher_map FROM mainapp_teachersubject;"
-        result = pg_driver.execute_query(query)
-
-        if result:
-            subject_teacher_map_str = str(result[0][0])
-            valid_json_str = subject_teacher_map_str.replace("'", '"')
-            teacher_subject_mapping = json.loads(valid_json_str)
-
-        else:
-            return Response({
+        if teacher_subject_mapping is None:
+            return Response(
+                {
                     "error": "Teacher subject mapping not found in Postgres."
                 },
-                status=400
+                status = 400
             )
 
         total_sections = {"A": 70, "B": 100, "C": 75, "D": 100}
@@ -213,66 +279,31 @@ def generate_timetable(request):
         mongo_driver.update_one(
             "lab_availability_matrix",
             {},
-            {"$set": {"matrix": updated_lab_availability_matrix}}
+            {
+                "$set": {
+                    "matrix": updated_lab_availability_matrix
+                }
+            }
         )
         mongo_driver.update_one(
             "teacher_availability_matrix",
-            {"department_name": department},
-            {"$set": {"matrix": updated_teacher_availability_matrix}}
+            {
+                "department_name": department
+            },
+            {
+                "$set": {
+                    "matrix": updated_teacher_availability_matrix
+                }
+            }
         )
 
-        csv_time_slots = [
-            "09:00-9:55", "9:55-10:50", "10:50-11:00", "11:00-11:55",
-            "11:55-12:50", "12:50-1:20", "1:20-2:15", "2:15-3:10",
-            "3:10-4:05", "4:05-5:00"
-        ]
-        days_order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
-
-        # Use department and course_id to create a base filename
-        base_filename = f"{department}-{course_id}"
-        csv_dir = os.path.join("static", "csvs")
-        os.makedirs(csv_dir, exist_ok=True)
-
-        # Determine all sections available in the timetable JSON
-        sections = set()
-        for day, sec_data in timetable.items():
-            for sec in sec_data.keys():
-                sections.add(sec)
-        sections = sorted(sections)
-
-        # Generate CSV for each section in the desired layout
-        for sec in sections:
-            rows = []
-            header = ["DAY \\ TIME"] + csv_time_slots
-            rows.append(header)
-
-            for day in days_order:
-                # Get lessons for the day & section; use day.capitalize() to match JSON keys
-                lessons = timetable.get(day.capitalize(), {}).get(sec, [])
-                # Build a mapping from normalized time slot (without spaces) to lesson
-                slot_map = {lesson["time_slot"].replace(" ", ""): lesson for lesson in lessons}
-
-                # Prepare subject row (with day name) and teacher row (first column empty)
-                subject_row = [day]
-                teacher_row = [""]
-                for ts in csv_time_slots:
-                    if ts in slot_map:
-                        lesson = slot_map[ts]
-                        subject_row.append(lesson["subject_id"])
-                        teacher_row.append(lesson["teacher_id"])
-                    else:
-                        subject_row.append("")
-                        teacher_row.append("")
-                rows.append(subject_row)
-                rows.append(teacher_row)
-
-            file_path = os.path.join(csv_dir, f"{base_filename}-{sec}.csv")
-            # Overwrite an existing file
-            with open(file_path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerows(rows)
-
+        generate_csv_files(
+            timetable,
+            department,
+            course_id
+        )
         sections_with_links = {}
+
         for sec, total in total_sections.items():
             file_name = f"{department}-{course_id}-{sec}.csv"
             download_link = request.build_absolute_uri(f"/static/csvs/{file_name}")
@@ -284,10 +315,16 @@ def generate_timetable(request):
         return Response({
             "timetable": timetable,
             "sections": sections_with_links
-        }, status=200)
+        },
+            status=200
+        )
 
     except Exception as e:
-        return Response({"error": f"Failed to generate timetable: {str(e)}"}, status=500)
+        return Response({
+            "error": f"Failed to generate timetable: {str(e)}"
+        },
+            status=500
+        )
 
 
 @api_view(['POST'])
