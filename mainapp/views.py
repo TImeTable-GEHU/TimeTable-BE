@@ -26,6 +26,12 @@ from Constants.is_conflict import IsConflict
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import HttpResponse
+from gridfs import GridFS
+import string
+import io
+import zipfile
+from bson import ObjectId
 
 
 @api_view(["POST"])
@@ -109,8 +115,15 @@ def getSpecificTeacher(request):
 
 
 def generateTimetable():
-    output = run_timetable_generation()
-    return output
+    output = run_timetable_generation() 
+    # chromosome_output, teacher_availability, classroom_availability = output
+    # mongo_driver = MongoDriver()
+    # mongo_driver.delete_many("teacher_availability", {})  
+    # mongo_driver.delete_many("classroom_availability", {})
+    # mongo_driver.insert_one("teacher_availability", teacher_availability)
+    # mongo_driver.insert_one("classroom_availability", classroom_availability)
+    return chromosome_output 
+
 
 
 @api_view(["POST"])
@@ -667,88 +680,180 @@ def addStudent(
         print(f"Error adding student {student_id}: {str(e)}")  # Debugging
         return {"status": "error", "message": str(e)}
 
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def addStudentAPI(request):
-    """
-    Add multiple students from an Excel file.
-    """
-    serializer = ExcelFileUploadSerializer(data=request.data)
-    if serializer.is_valid():
-        excel_file = serializer.validated_data["file"]
+    mongo = MongoDriver()
+    fs = GridFS(mongo.db)
+    files = request.FILES.getlist("file")  
+    dept = request.data.get("dept")
+    course = request.data.get("course")
+    branch = request.data.get("branch")
+    year = request.data.get("year")
+    semester = request.data.get("semester")
+    total_sections = request.data.get("total_sections")
 
+    if not files:
+        return Response({"error": "No files uploaded"}, status=400)
+
+    try:
+        total_sections = int(total_sections)
+        if total_sections <= 0:
+            raise ValueError("Total sections must be a positive integer.")
+    except ValueError:
+        return Response({"error": "Invalid total_sections value"}, status=400)
+
+    all_students = []
+    for file in files:
         try:
-            data = pd.read_excel(excel_file).fillna("")
+            data = pd.read_excel(file).fillna("")
             data.columns = data.columns.str.lower()
-
             if data.empty:
-                return Response({"error": "Uploaded file is empty"}, status=400)
-
+                continue
             students_list = data.to_dict(orient="records")
-
-            processed_students = StudentScorer(
-                students_list
-            ).entry_point_for_section_divide()
-
-            failed_rows = []
-            required_fields = [
-                "student_name",
-                "student_id",
-                "dept",
-                "course",
-                "branch",
-                "semester",
-            ]
-
-            for index, row in enumerate(processed_students):
-                missing_fields = [
-                    field for field in required_fields if not row.get(field)
-                ]
-                if missing_fields:
-                    failed_rows.append(
-                        {
-                            "row": index + 1,
-                            "error": f"Missing fields: {', '.join(missing_fields)}",
-                        }
-                    )
-                    continue
-
-                student_data = {
-                    "student_name": row.get("student_name"),
-                    "student_id": row.get("student_id"),
-                    "is_hosteller": row.get("is_hosteller"),
-                    "location": row.get("location"),
-                    "dept": row.get("dept"),
-                    "course": row.get("course"),
-                    "branch": row.get("branch"),
-                    "semester": row.get("semester"),
-                    "section": row.get("section"),
-                    "cgpa": row.get("cgpa"),
-                }
-
-                result = addStudent(**student_data)
-
-                if result["status"] != "success":
-                    failed_rows.append({"row": index + 1, "error": result["message"]})
-
-            if failed_rows:
-                print(f"Some students could not be added: {failed_rows}")
-                return Response(
-                    {
-                        "message": "Some students could not be added",
-                        "errors": failed_rows,
-                    },
-                    status=400,
-                )
-
-            return Response({"message": "All students added successfully"}, status=200)
-
+            all_students.extend(students_list)
         except Exception as e:
-            print(f"Error processing Excel file: {str(e)}")
-            return Response({"error": str(e)}, status=400)
+            return Response({"error": f"Error processing {file.name}: {str(e)}"}, status=400)
 
-    return Response(serializer.errors, status=400)
+    total_students = len(all_students)
+    if total_students == 0:
+        return Response({"error": "No students found in uploaded files"}, status=400)
+
+    class_strength = total_students // total_sections
+    extra_students = total_students % total_sections  
+
+    # Step 1: Assign Scores Using Student Scorer
+    scorer = StudentScorer()
+    students_with_scores = scorer.assign_scores_to_students(all_students)
+
+    print("Students before sorting:")
+    for student in students_with_scores:
+        print(f"{student['student_name']} - Score: {student['score']}")
+    
+    # Sort students by score in descending order
+    students_with_scores.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Debugging statement: Print sorted students based on score
+    print("Sorted students by score:")
+    for student in students_with_scores:
+        print(f"{student['student_name']} - Score: {student['score']}")
+    
+    # Label sections (A, B, C...)
+    def get_section_label(index):
+        letters = string.ascii_uppercase
+        if index < 26:
+            return letters[index]
+        else:
+            return letters[(index // 26) - 1] + letters[index % 26]
+    
+    section_labels = [get_section_label(i) for i in range(total_sections)]
+    
+    # Allocate students so that Section A is filled first, then Section B, and so on
+    sections = {label: [] for label in section_labels}
+    student_index = 0
+    
+    for section in section_labels:
+        while len(sections[section]) < class_strength and student_index < total_students:
+            sections[section].append(students_with_scores[student_index])
+            student_index += 1
+    
+    # Distribute extra students among sections
+    for i in range(extra_students):
+        sections[section_labels[i]].append(students_with_scores[student_index])
+        student_index += 1
+    
+    print("\n--- Debug: Student Section Allocation ---")
+    for label, students in sections.items():
+        for student in students:
+            print(f"Student: {student['student_name']}, Score: {student['score']}, Assigned Section: {label}")
+
+    # Allocate students to sections
+    for label, students in sections.items():
+        for student in students:
+            student["section"] = label  # 🔹 Ensure the assigned section is updated
+            addStudent(
+                student_name=student["student_name"],
+                student_id=student["student_id"],
+                is_hosteller=student["is_hosteller"],
+                location=student["location"],
+                dept=dept,
+                course=course,
+                branch=branch,
+                semester=int(semester),
+                section=label,  
+                cgpa=float(student["cgpa"]),
+            )
+
+    section_entries = []
+    for section, students in sections.items():
+        section_data = {
+            "dept": dept,
+            "course": course,
+            "branch": branch,
+            "year": year,
+            "semester": semester,
+            "section": section,
+            "students": students,
+        }
+        inserted = mongo.insert_one("sections", section_data)
+        section_entries.append({
+            "section": section,
+            "mongo_id": str(inserted.inserted_id)
+        })
+
+    return Response({
+        "message": "Students processed successfully",
+        "total_students": len(all_students),
+        "sections": section_entries, 
+    }, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def listSections(request):
+    mongo = MongoDriver()
+    sections_cursor = mongo.find("sections", {})
+    sections = []
+    
+    for section in sections_cursor:
+        sections.append({
+            "mongo_id": str(section["_id"]),
+            "dept": section["dept"],
+            "course": section["course"],
+            "branch": section["branch"],
+            "year": section["year"],
+            "semester": section["semester"],
+            "section": section["section"]
+        })
+    
+    return Response({"sections": sections}, status=200)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def downloadSections(request, mongo_id):
+    mongo = MongoDriver()
+
+    try:
+        object_id = ObjectId(mongo_id)  # 🔥 Convert string to ObjectId
+    except Exception:
+        return Response({"error": "Invalid section ID"}, status=400)
+
+    section_cursor = mongo.find("sections", {"_id": object_id}).limit(1)
+    section_list = list(section_cursor)
+
+    if not section_list:
+        return Response({"error": "Section not found"}, status=404)
+
+    section_data = section_list[0]
+    df = pd.DataFrame(section_data["students"])
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
+
+    filename = f"{section_data['dept']}_{section_data['course']}_{section_data['branch']}_{section_data['year']}_Sem{section_data['semester']}_Sec{section_data['section']}.csv"
+    response = HttpResponse(csv_buffer.getvalue(), content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    return response
 
 
 @csrf_exempt
