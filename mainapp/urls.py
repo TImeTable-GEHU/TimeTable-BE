@@ -24,6 +24,8 @@ from .views import (
     generate_timetable,
     addStudentAPI,
     detectConflicts,
+    downloadSections,
+    listSections,
 )
 
 schema_view = get_schema_view(
@@ -78,4 +80,6 @@ urlpatterns = [
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
     # csv to chromosome
     path("addStudentAPI/", addStudentAPI, name="addStudentAPI"),
+    path("download/<str:mongo_id>/", downloadSections, name="downloadSections"),
+    path("listSections/",listSections,name="listSections"),
 ]
