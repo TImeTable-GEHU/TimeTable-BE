@@ -208,7 +208,31 @@ def generate_timetable(request):
         course_id = data.get("course_id")
         semester = data.get("semester")
         department = data.get("department")
+        time_slots_from_fe = data.get("time_slots")
+        reversed_time_slots_map = {
+            v: k
+            for k, v in time_slots_from_fe.items()
+        }
 
+            # {
+            #     1: "9:00 - 9:55",
+            #     2: "9:55 - 10:50",
+            #     3: "11:10 - 12:05",
+            #     4: "12:05 - 1:00",
+            #     5: "1:20 - 2:15",
+            #     6: "2:15 - 3:10",
+            #     7: "3:30 - 4:25",
+            # }
+
+            # {
+            #     "9:00 - 9:55": 1,
+            #     "9:55 - 10:50": 2,
+            #     "11:10 - 12:05": 3,
+            #     "12:05 - 1:00": 4,
+            #     "1:20 - 2:15": 5,
+            #     "2:15 - 3:10": 6,
+            #     "3:30 - 4:25": 7
+            # }
         if not (course_id and semester and department):
             return Response(
                 {
@@ -230,7 +254,12 @@ def generate_timetable(request):
                 status = 400
             )
 
-        total_sections = {"A": 70, "B": 100, "C": 75, "D": 100}
+        get_section_query = "SELECT section, COUNT(*) AS section_count FROM public.mainapp_student GROUP BY section;"
+        result = pg_driver.execute_query(get_section_query)
+        total_sections = {row["section"]: row["section_count"] for row in result}
+        # total_sections = {"A": 70, "B": 100, "C": 75, "D": 100}
+        # todo: Ask gunjan the section csv.
+
         timetable, updated_teacher_availability_matrix, updated_lab_availability_matrix = generate_timetable_from_ga(
             lab_availability_matrix=lab_availability_matrix,
             teacher_availability_matrix=teacher_availability_matrix,
@@ -247,15 +276,7 @@ def generate_timetable(request):
             subject_quota_limits=SubjectWeeklyQuota.subject_quota,
             teacher_duty_days=TeacherWorkload.teacher_duty_days,
             total_generations=Defaults.total_no_of_generations,
-            time_slots={
-                1: "9:00 - 9:55",
-                2: "9:55 - 10:50",
-                3: "11:10 - 12:05",
-                4: "12:05 - 1:00",
-                5: "1:20 - 2:15",
-                6: "2:15 - 3:10",
-                7: "3:30 - 4:25",
-            },
+            time_slots=time_slots_from_fe,
             day_map={
                 "Monday": 0,
                 "Tuesday": 1,
@@ -263,17 +284,8 @@ def generate_timetable(request):
                 "Thursday": 3,
                 "Friday": 4,
                 "Saturday": 5,
-                "Sunday": 6
             },
-            time_slot_map={
-                "9:00 - 9:55": 1,
-                "9:55 - 10:50": 2,
-                "11:10 - 12:05": 3,
-                "12:05 - 1:00": 4,
-                "1:20 - 2:15": 5,
-                "2:15 - 3:10": 6,
-                "3:30 - 4:25": 7
-            }
+            time_slot_map = reversed_time_slots_map
         )
 
         mongo_driver.update_one(
