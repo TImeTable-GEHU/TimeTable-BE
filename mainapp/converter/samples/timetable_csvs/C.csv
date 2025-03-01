@@ -1,7 +1,0 @@
-DAY,9:00 - 9:55,9:55 - 10:50,10:50 - 11:10,11:10 - 12:05,12:05 - 1:00,01:00 - 01:20,1:20 - 2:15,2:15 - 3:10,03:10 - 03:30,3:30 - 4:25
-Monday,"XCS-501 (NB22, R3)","TCS-509 (AB17, R3)",BREAK,"TCS-502 (AC05, R3)","TMA-502 (JM12, R3)",LUNCH,"CSP-501 (AK23, R3)","TCS-503 (DP07, R3)",BREAK,"TCS-531 (PK02, R3)"
-Tuesday,"PCS-506 (AD08, L2)","PCS-506 (AD08, L2)",BREAK,"TCS-502 (SS03, R3)","TCS-531 (AB01, R3)",LUNCH,"TMA-502 (JM12, R3)","SCS-501 (AP24, R3)",BREAK,"TCS-509 (HP18, R3)"
-Wednesday,"TMA-502 (BJ10, R3)","XCS-501 (DT20, R3)",BREAK,"TCS-502 (SS03, R3)","TCS-531 (AB01, R3)",LUNCH,,,BREAK,
-Thursday,"TCS-503 (DP07, R3)","TCS-509 (HP18, R3)",BREAK,"PCS-503 (RS11, L2)","PCS-503 (RS11, L2)",LUNCH,"PMA-502 (AA15, L3)","PMA-502 (AA15, L3)",BREAK,"Library (None, R3)"
-Friday,"TCS-503 (DP07, R3)","Library (None, R3)",BREAK,"Placement_Class (AK26, R3)","Placement_Class (AK26, R3)",LUNCH,"Library (None, R3)","Library (None, R3)",BREAK,"Library (None, R3)"
-Saturday,"Library (None, R3)","Library (None, R3)",BREAK,"Library (None, R3)","Library (None, R3)",LUNCH,,,BREAK,
