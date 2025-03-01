@@ -99,31 +99,31 @@ def teacher_json_to_csv(teacher_timetable, output_folder, time_slots):
             writer.writerow(header)
             writer.writerows(rows)
 
-# if __name__ == "__main__":
-#     # Load teacher timetable from samples/teacher.json
-#     json_file = os.path.join(os.path.dirname(__file__), "samples", "teacher.json")  # ✅ Fixed path
+if __name__ == "__main__":
+    # Load teacher timetable from samples/teacher.json
+    json_file = os.path.join(os.path.dirname(__file__), "samples", "teacher.json")  # Fixed path
 
-#     if not os.path.exists(json_file):
-#         print(f"❌ Error: {json_file} not found!")
-#     else:
-#         with open(json_file, "r", encoding="utf-8") as file:
-#             teacher_tt = json.load(file)
+    if not os.path.exists(json_file):
+        print(f"Error: {json_file} not found!")
+    else:
+        with open(json_file, "r", encoding="utf-8") as file:
+            teacher_tt = json.load(file)
 
-#         # Define time slots mapping
-#         time_slots = {
-#             1: "08:00 - 09:00",
-#             2: "09:00 - 10:00",
-#             3: "11:00 - 12:00",
-#             4: "12:00 - 13:00",
-#             5: "16:50 - 17:50",
-#         }
+        # Define time slots mapping
+        time_slots = {
+            1: "08:00 - 09:00",
+            2: "09:00 - 10:00",
+            3: "11:00 - 12:00",
+            4: "12:00 - 13:00",
+            5: "16:50 - 17:50",
+        }
 
-#         # Convert JSON timetable to CSVs inside samples/tt_csvs
-#         output_folder = os.path.join(os.path.dirname(__file__), "samples", "tt_csvs")
-#         os.makedirs(output_folder, exist_ok=True)  # Ensure folder exists
+        # Convert JSON timetable to CSVs inside samples/tt_csvs
+        output_folder = os.path.join(os.path.dirname(__file__), "samples", "teacher_tt_csvs")
+        os.makedirs(output_folder, exist_ok=True)  # Ensure folder exists
 
-#         teacher_json_to_csv(teacher_tt, output_folder, time_slots)
-#         print(f"✅ Teacher CSV files have been saved in '{output_folder}'.")
+        teacher_json_to_csv(teacher_tt, output_folder, time_slots)
+        print(f"Teacher CSV files have been saved in '{output_folder}'.")
 
 
 def extract_time_slots_for_classroom(timetable, time_slot_order):
