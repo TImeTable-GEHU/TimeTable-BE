@@ -23,19 +23,19 @@ def get_filtered_subjects(request):
     """
     Retrieve subjects based on department, course, branch, and semester.
     """
-    dept = request.GET.get("dept")
+    department = request.GET.get("department")
     course = request.GET.get("course")
     branch = request.GET.get("branch", "")
     semester = request.GET.get("semester")
 
-    if not all([dept, course, semester]):
+    if not all([department, course, semester]):
         return Response(
-            {"error": "Please provide dept, course, and semester."},
+            {"error": "Please provide department, course, and semester."},
             status=400,
         )
 
     filters = {
-        "dept": dept,
+        "department": department,
         "course": course,
         "semester": semester,
     }
@@ -51,23 +51,23 @@ def get_filtered_subjects(request):
 @permission_classes([IsAuthenticated])
 def add_subject(request):
     """
-    Add one or multiple subjects to a specific dept, course, branch, and semester.
+    Add one or multiple subjects to a specific department, course, branch, and semester.
     """
     data = request.data if isinstance(request.data, list) else [request.data]
     added_subjects = []
     errors = []
 
     for subject_data in data:
-        dept = subject_data.get("dept")
+        department = subject_data.get("department")
         course = subject_data.get("course")
         branch = subject_data.get("branch", "")
         semester = subject_data.get("semester")
 
-        if not all([dept, course, semester]):
+        if not all([department, course, semester]):
             errors.append(
                 {
                     "subject_data": subject_data,
-                    "error": "Please provide dept, course, and semester for each subject.",
+                    "error": "Please provide department, course, and semester for each subject.",
                 }
             )
             continue
@@ -103,7 +103,7 @@ def add_subject(request):
             "credits": credits,
             "weekly_quota_limit": weekly_quota_limit,
             "is_special_subject": is_special_subject,
-            "dept": dept,
+            "department": department,
             "course": course,
             "branch": branch,
             "semester": semester,
@@ -173,4 +173,3 @@ def delete_subject(request, pk):
         return Response({"message": "Subject deleted successfully"}, status=200)
     except Subject.DoesNotExist:
         return Response({"error": "Subject not found"}, status=404)
-
