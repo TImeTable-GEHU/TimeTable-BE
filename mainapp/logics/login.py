@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -12,7 +12,7 @@ from mainapp.models import Teacher
 @permission_classes([AllowAny])
 def login(request):
     """
-        Authenticate a teacher using email and return JWT tokens.
+    Authenticate a teacher using email and return JWT tokens.
     """
     email = request.data.get("email", "").strip().lower()
     password = request.data.get("password", "").strip()
@@ -25,14 +25,12 @@ def login(request):
     if not user:
         return Response({"error": "Invalid email or password."}, status=401)
 
-    # Authenticate using username
-    user = (authenticate(username=user.username, password=password))
+    user = authenticate(username=user.username, password=password)
 
     if not user:
         return Response({"error": "Invalid email or password."}, status=401)
 
-    teacher = (Teacher.objects.filter(user=user).first())
-
+    teacher = Teacher.objects.filter(user=user).first()
     if not teacher:
         return Response({"error": "Teacher account not found."}, status=404)
 
@@ -45,7 +43,7 @@ def login(request):
             "access_token": str(refresh.access_token),
             "refresh_token": str(refresh),
             "teacher": {
-                "teacher_type": "teacher.teacher_type",
+                "teacher_type": teacher.teacher_type,
             },
         },
         status=200,

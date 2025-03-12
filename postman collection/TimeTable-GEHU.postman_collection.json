@@ -1232,7 +1232,7 @@
 							"header": [
 								{
 									"key": "Date",
-									"value": "Tue, 18 Feb 2025 12:59:06 GMT"
+									"value": "Fri, 21 Feb 2025 17:43:25 GMT"
 								},
 								{
 									"key": "Server",
@@ -1256,7 +1256,7 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "272"
+									"value": "326"
 								},
 								{
 									"key": "X-Content-Type-Options",
@@ -1272,7 +1272,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 59,\n    \"name\": \"Vibha Chandola\",\n    \"email\": \"vibhachandola.220121207@gehu.ac.in\",\n    \"teacher_code\": \"VC-01\",\n    \"teacher_type\": \"faculty\",\n    \"phone\": \"1234567890\",\n    \"department\": \"Computer Science Engineering\",\n    \"designation\": \"Professor\",\n    \"working_days\": \"Monday-Friday\",\n    \"preferred_subjects\": []\n}"
+							"body": "{\n    \"id\": 58,\n    \"name\": \"Atharva Raj Sinha\",\n    \"email\": \"ath@gehu.ac.in\",\n    \"teacher_code\": \"ARS-01\",\n    \"teacher_type\": \"hod\",\n    \"phone\": \"1234567890\",\n    \"department\": \"Computer Science Engineering\",\n    \"designation\": \"Assistant Professor\",\n    \"working_days\": \"Monday-Friday\",\n    \"assigned_subjects\": [\n        \"Placement Class\",\n        \"Network and System Security\",\n        \"Compiler Design\"\n    ]\n}"
 						}
 					]
 				},
@@ -1404,7 +1404,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"preferred_subjects\": [\r\n        \"Compiler Design\"\r\n    ]\r\n}",
+							"raw": "{\r\n    \"phone\": \"0123456789\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1431,7 +1431,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"preferred_subjects\": [\r\n        \"Compiler Design\"\r\n    ]\r\n}",
+									"raw": "{\r\n    \"phone\": \"0123456789\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1456,7 +1456,7 @@
 							"header": [
 								{
 									"key": "Date",
-									"value": "Tue, 18 Feb 2025 12:48:58 GMT"
+									"value": "Fri, 21 Feb 2025 17:44:53 GMT"
 								},
 								{
 									"key": "Server",
@@ -1472,7 +1472,7 @@
 								},
 								{
 									"key": "Allow",
-									"value": "PUT, OPTIONS"
+									"value": "OPTIONS, PUT"
 								},
 								{
 									"key": "X-Frame-Options",
@@ -1480,7 +1480,7 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "268"
+									"value": "305"
 								},
 								{
 									"key": "X-Content-Type-Options",
@@ -1496,7 +1496,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"id\": 58,\n    \"name\": \"Atharva Raj Sinha\",\n    \"email\": \"ath@gehu.ac.in\",\n    \"teacher_code\": \"ARS-01\",\n    \"phone\": \"1234567890\",\n    \"department\": \"Computer Science Engineering\",\n    \"designation\": \"Professor\",\n    \"working_days\": \"Monday-Friday\",\n    \"preferred_subjects\": [\n        \"Computer Networks\",\n        \"Compiler Design\"\n    ]\n}"
+							"body": "{\n    \"id\": 58,\n    \"name\": \"Atharva Raj Sinha\",\n    \"email\": \"ath@gehu.ac.in\",\n    \"teacher_code\": \"ARS-01\",\n    \"phone\": \"0123456789\",\n    \"department\": \"Computer Science Engineering\",\n    \"designation\": \"Assistant Professor\",\n    \"working_days\": \"Monday-Friday\",\n    \"assigned_subjects\": [\n        \"Placement Class\",\n        \"Network and System Security\",\n        \"Compiler Design\"\n    ]\n}"
 						}
 					]
 				},
@@ -1923,7 +1923,7 @@
 							"header": [
 								{
 									"key": "Date",
-									"value": "Tue, 18 Feb 2025 13:10:32 GMT"
+									"value": "Wed, 19 Feb 2025 18:28:05 GMT"
 								},
 								{
 									"key": "Server",
@@ -1947,7 +1947,7 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "642"
+									"value": "437"
 								},
 								{
 									"key": "X-Content-Type-Options",
@@ -1963,7 +1963,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"subjects\": [\n        {\n            \"subject_name\": \"Placement Class\",\n            \"subject_code\": \"TCS-601\"\n        },\n        {\n            \"subject_name\": \"Network and System Security\",\n            \"subject_code\": \"TCS-603\"\n        },\n        {\n            \"subject_name\": \"Computer Networks\",\n            \"subject_code\": \"TCS-602\"\n        },\n        {\n            \"subject_name\": \"Compiler Design\",\n            \"subject_code\": \"TCS-604\"\n        }\n    ],\n    \"pending_requests\": {\n        \"TCS-602\": [\n            \"Atharva Raj Sinha\",\n            \"Vibha Chandola\"\n        ],\n        \"TCS-603\": [\n            \"Vibha Chandola\"\n        ],\n        \"TCS-604\": [\n            \"Atharva Raj Sinha\"\n        ]\n    },\n    \"teachers\": [\n        {\n            \"teacher_name\": \"Atharva Raj Sinha\",\n            \"teacher_code\": \"ARS-01\"\n        },\n        {\n            \"teacher_name\": \"Vibha Chandola\",\n            \"teacher_code\": \"VC-01\"\n        },\n        {\n            \"teacher_name\": \"Lokesh Singh\",\n            \"teacher_code\": \"LS-01\"\n        },\n        {\n            \"teacher_name\": \"Gunjan Bhanwal\",\n            \"teacher_code\": \"GB-01\"\n        }\n    ]\n}"
+							"body": "{\n    \"subjects\": [\n        {\n            \"subject_name\": \"Placement Class\",\n            \"subject_code\": \"TCS-601\"\n        },\n        {\n            \"subject_name\": \"Network and System Security\",\n            \"subject_code\": \"TCS-603\"\n        },\n        {\n            \"subject_name\": \"Computer Networks\",\n            \"subject_code\": \"TCS-602\"\n        },\n        {\n            \"subject_name\": \"Compiler Design\",\n            \"subject_code\": \"TCS-604\"\n        }\n    ],\n    \"pending_requests\": {\n        \"TCS-602\": [\n            {\n                \"LS-01\": \"Lokesh Singh\"\n            }\n        ],\n        \"TCS-603\": [\n            {\n                \"LS-01\": \"Lokesh Singh\"\n            }\n        ]\n    },\n    \"teachers\": [\n        {\n            \"teacher_name\": \"Atharva Raj Sinha\",\n            \"teacher_code\": \"ARS-01\"\n        }\n    ]\n}"
 						}
 					]
 				},
@@ -1984,7 +1984,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"TCS-603\": [\r\n        \"G-01\"\r\n    ]\r\n}",
+							"raw": "{\r\n    \"TCS-601\": [ \"ARS-01\", \"VC-01\" ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2010,7 +2010,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"TCS-603\": [\r\n        \"G-01\"\r\n    ]\r\n}",
+									"raw": "{\r\n    \"TCS-601\": [ \"ARS-01\", \"VC-01\" ]\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2034,7 +2034,7 @@
 							"header": [
 								{
 									"key": "Date",
-									"value": "Tue, 18 Feb 2025 18:32:50 GMT"
+									"value": "Fri, 21 Feb 2025 14:37:22 GMT"
 								},
 								{
 									"key": "Server",
@@ -2050,7 +2050,7 @@
 								},
 								{
 									"key": "Allow",
-									"value": "OPTIONS, POST"
+									"value": "POST, OPTIONS"
 								},
 								{
 									"key": "X-Frame-Options",
@@ -2058,7 +2058,7 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "45"
+									"value": "61"
 								},
 								{
 									"key": "X-Content-Type-Options",
@@ -2074,7 +2074,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"message\": \"Subjects approved successfully!\"\n}"
+							"body": "{\n    \"message\": \"Subjects approved and emails sent successfully!\"\n}"
 						}
 					]
 				},
@@ -2106,7 +2106,7 @@
 					},
 					"response": [
 						{
-							"name": "get approved subjects response",
+							"name": "Get approved subjects response",
 							"originalRequest": {
 								"method": "GET",
 								"header": [],
@@ -2127,7 +2127,7 @@
 							"header": [
 								{
 									"key": "Date",
-									"value": "Tue, 18 Feb 2025 13:15:43 GMT"
+									"value": "Fri, 21 Feb 2025 14:39:13 GMT"
 								},
 								{
 									"key": "Server",
@@ -2151,7 +2151,7 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "184"
+									"value": "371"
 								},
 								{
 									"key": "X-Content-Type-Options",
@@ -2167,7 +2167,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"subject_code\": \"TCS-602\",\n        \"subject_name\": \"Computer Networks\",\n        \"teachers\": [\n            \"Lokesh Singh\"\n        ]\n    },\n    {\n        \"subject_code\": \"TCS-604\",\n        \"subject_name\": \"Compiler Design\",\n        \"teachers\": [\n            \"Atharva Raj Sinha\"\n        ]\n    }\n]"
+							"body": "[\n    {\n        \"subject_code\": \"TCS-601\",\n        \"subject_name\": \"Placement Class\",\n        \"teachers\": [\n            {\n                \"ARS-01\": \"Atharva Raj Sinha\"\n            },\n            {\n                \"VC-01\": \"Vibha Chandola\"\n            }\n        ]\n    },\n    {\n        \"subject_code\": \"TCS-603\",\n        \"subject_name\": \"Network and System Security\",\n        \"teachers\": [\n            {\n                \"ARS-01\": \"Atharva Raj Sinha\"\n            },\n            {\n                \"G-01\": \"Gunjan \"\n            }\n        ]\n    },\n    {\n        \"subject_code\": \"TCS-604\",\n        \"subject_name\": \"Compiler Design\",\n        \"teachers\": [\n            {\n                \"ARS-01\": \"Atharva Raj Sinha\"\n            }\n        ]\n    }\n]"
 						}
 					]
 				}

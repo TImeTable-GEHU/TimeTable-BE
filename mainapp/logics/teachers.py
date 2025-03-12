@@ -4,11 +4,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.core.mail import send_mail
-from mainapp.models import Subject, Teacher, TeacherSubject
+from mainapp.models import Subject, Teacher, TeacherSubject, SubjectPreference
 from mainapp.serializers import TeacherSerializer
-
 from django.contrib.auth.models import User
-from django.conf import settings
+from django.contrib.auth.hashers import check_password
+from .emails import send_email_async
 
 class TimetableSerializer(serializers.Serializer):
     course_id = serializers.CharField(max_length=100)
@@ -50,10 +50,11 @@ def get_specific_teacher(request):
             "department": teacher.department,
             "designation": teacher.designation,
             "working_days": teacher.working_days,
-            "preferred_subjects": subject_names,
+            "assigned_subjects": subject_names,
         },
         status=200,
     )
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -70,8 +71,8 @@ def get_teachers(request):
 @permission_classes([AllowAny])
 def add_teacher(request):
     """
-        Add a new teacher, generate a unique teacher_code & password,
-        map preferred subjects in JSONField, and send credentials via email.
+    Add a new teacher, generate a unique teacher_code & password,
+    store preferred subjects in SubjectPreference, and send credentials via email.
     """
     teacher_data = request.data
 
@@ -87,18 +88,21 @@ def add_teacher(request):
 
     teacher_code = Teacher.generate_teacher_code(full_name)
     first_name = full_name.split()[0]
-    raw_password = f"{first_name}{teacher_code}"
 
-    # Create User and hash password automatically
     user = User.objects.create_user(
         username=teacher_code.lower(),
         email=email,
-        first_name=full_name.split()[0],
+        first_name=first_name,
         last_name=" ".join(full_name.split()[1:]),
-        password=raw_password,
     )
 
-    # Create the Teacher linked to User
+    initials = "".join([part[0] for part in full_name.split()])
+    teacher_id = str(user.id)
+    raw_password = f"{first_name}@{initials}-{teacher_id}"
+
+    user.set_password(raw_password)
+    user.save()
+
     teacher = Teacher.objects.create(
         user=user,
         phone=teacher_data.get("phone", ""),
@@ -110,45 +114,33 @@ def add_teacher(request):
     )
 
     subject_names = teacher_data.get("preferred_subjects", [])
-    # Convert subject names to subject codes
-    subject_codes = []
     for subject_name in subject_names:
         subject = Subject.objects.filter(subject_name=subject_name).first()
         if subject:
-            subject_codes.append(subject.subject_code)
+            SubjectPreference.add_preference(
+                subject.department, subject.subject_code, teacher_code, full_name
+            )
         else:
             return Response(
                 {"error": f"Subject '{subject_name}' not found."}, status=404
             )
 
-    # Map preferred subjects using subject codes
-    for subject_code in subject_codes:
-        TeacherSubject.add_teacher_to_subject(subject_code, teacher_code)
+    # Prepare email context
+    email_context = {
+        "teacher_name": full_name,
+        "preferred_subjects": subject_names,
+        "teacher_code": teacher_code,
+        "email": email,
+        "password": raw_password,
+    }
 
-    # Send email with credentials
-    email_subject = "Your Teacher Account Credentials"
-    email_body = render_to_string(
-        "emails/teacher_confirmation_email.html",
-        {
-            "teacher_name": full_name,
-            "teacher_code": teacher_code,
-            "preferred_subjects": subject_names,
-            "email": email,
-            "password": raw_password,
-        },
+    # Send email asynchronously using threading
+    send_email_async(
+        subject="Your Teacher Account Credentials",
+        template_name="teacher_confirmation_email.html",
+        context=email_context,
+        recipient_email=email,
     )
-
-    try:
-        send_mail(
-            email_subject,
-            email_body,
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-            html_message=email_body,
-        )
-    except Exception as e:
-        return Response({"error": f"Failed to send email: {str(e)}"}, status=500)
 
     return Response(
         {"message": "Teacher added successfully, credentials sent via email."},
@@ -160,7 +152,7 @@ def add_teacher(request):
 @permission_classes([IsAuthenticated])
 def update_teacher(request, pk):
     """
-    Update an existing teacher's details by ID, including preferred subjects.
+    Update an existing teacher's details by ID.
     """
     try:
         teacher = Teacher.objects.get(id=pk)
@@ -171,50 +163,13 @@ def update_teacher(request, pk):
         if serializer.is_valid():
             serializer.save()
 
-            if "preferred_subjects" in request.data:
-                new_subject_names = request.data["preferred_subjects"]
-                teacher_code = teacher.teacher_code
+            subject_codes = TeacherSubject.get_teacher_subjects(teacher.teacher_code)
 
-                # Fetch existing mapping and remove teacher from all assigned subjects
-                try:
-                    mapping = TeacherSubject.objects.get(id=1)
-                    for subject_code in list(mapping.subject_teacher_map.keys()):
-                        if teacher_code in mapping.subject_teacher_map[subject_code]:
-                            mapping.subject_teacher_map[subject_code].remove(
-                                teacher_code
-                            )
-                            if not mapping.subject_teacher_map[
-                                subject_code
-                            ]:  # Remove key if empty
-                                del mapping.subject_teacher_map[subject_code]
-                    mapping.save()
-                except TeacherSubject.DoesNotExist:
-                    pass  # No mapping exists yet, so nothing to remove
-
-                # Convert subject names to subject codes
-                subject_codes = []
-                for subject_name in new_subject_names:
-                    subject = Subject.objects.filter(subject_name=subject_name).first()
-                    if subject:
-                        subject_codes.append(subject.subject_code)
-                    else:
-                        return Response(
-                            {"error": f"Subject '{subject_name}' not found."},
-                            status=404,
-                        )
-
-                # Add teacher to new preferred subjects
-                for subject_code in subject_codes:
-                    TeacherSubject.add_teacher_to_subject(subject_code, teacher_code)
-
-            # Fetch updated subject names for response
-            updated_subject_codes = TeacherSubject.get_teacher_subjects(
-                teacher.teacher_code
+            subject_names = list(
+                Subject.objects.filter(subject_code__in=subject_codes).values_list(
+                    "subject_name", flat=True
+                )
             )
-            updated_subject_names = [
-                Subject.objects.get(subject_code=code).subject_name
-                for code in updated_subject_codes
-            ]
 
             return Response(
                 {
@@ -226,7 +181,7 @@ def update_teacher(request, pk):
                     "department": teacher.department,
                     "designation": teacher.designation,
                     "working_days": teacher.working_days,
-                    "preferred_subjects": updated_subject_names,
+                    "assigned_subjects": subject_names,
                 },
                 status=200,
             )
@@ -238,7 +193,7 @@ def update_teacher(request, pk):
 
 
 @api_view(["DELETE"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def delete_teacher(request, pk):
     """
     Delete a teacher by ID.
@@ -249,3 +204,38 @@ def delete_teacher(request, pk):
         return Response({"message": "Teacher deleted successfully"}, status=200)
     except Teacher.DoesNotExist:
         return Response({"error": "Teacher not found"}, status=404)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_password(request):
+    """
+    Allows a teacher to update their login password.
+    """
+    user = request.user
+    data = request.data
+
+    old_password = data.get("old_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+    confirm_password = data.get("confirm_password", "").strip()
+
+    if not old_password or not new_password or not confirm_password:
+        return Response({"error": "All fields are required."}, status=400)
+
+    if not check_password(old_password, user.password):
+        return Response({"error": "Old password is incorrect."}, status=400)
+
+    if new_password != confirm_password:
+        return Response(
+            {"error": "New password and confirm password do not match."}, status=400
+        )
+
+    if len(new_password) < 8:
+        return Response(
+            {"error": "New password must be at least 8 characters long."}, status=400
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password updated successfully."}, status=200)
